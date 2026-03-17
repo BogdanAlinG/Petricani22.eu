@@ -10,8 +10,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
-  Check,
-  MapPin,
   Share2,
   Heart,
   Loader,
@@ -85,18 +83,29 @@ function ImageGallery({
   const touchStartY = useRef<number | null>(null);
   const animationTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const allImages =
-    images.length > 0
-      ? images
+  const allImages = React.useMemo(() => {
+    const galleryItems = [...images];
+    
+    // Add thumbnail as the first image if it exists and isn't already in the gallery
+    if (thumbnailUrl && !galleryItems.some(img => img.image_url === thumbnailUrl)) {
+      galleryItems.unshift({
+        image_url: thumbnailUrl,
+        alt_text_en: 'Accommodation',
+        alt_text_ro: 'Cazare',
+      });
+    }
+
+    return galleryItems.length > 0
+      ? galleryItems
       : [
           {
             image_url:
-              thumbnailUrl ||
               'https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=1200',
             alt_text_en: 'Accommodation',
             alt_text_ro: 'Cazare',
           },
         ];
+  }, [images, thumbnailUrl]);
 
   const navigate = (nextIndex: number, dir: SlideDirection) => {
     if (animating) return;
@@ -252,9 +261,7 @@ function ImageGallery({
 }
 
 function AmenityIcon({ iconName }: { iconName: string }) {
-  const Icon = (LucideIcons as Record<string, React.ComponentType<{ className?: string }>>)[
-    iconName
-  ] || LucideIcons.Check;
+  const Icon = (LucideIcons as any)[iconName] || LucideIcons.Check;
   return <Icon className="w-5 h-5" />;
 }
 
@@ -503,7 +510,7 @@ export default function AccommodationDetailPage() {
               <h2 className="text-2xl font-bold text-gray-900 mb-6">{t.location}</h2>
 
               <div className="rounded-xl overflow-hidden h-[400px] mb-6">
-                <GoogleMap />
+                <GoogleMap language={language} />
               </div>
 
               {pois.length > 0 && (

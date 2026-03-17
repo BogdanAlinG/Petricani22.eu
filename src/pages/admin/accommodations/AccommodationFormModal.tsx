@@ -98,6 +98,7 @@ export default function AccommodationFormModal({
               images={galleryImages}
               isCreating={isCreating}
               accommodationId={editing.id}
+              thumbnailUrl={editing.thumbnail_url}
               onAddImage={onSelectGalleryImage}
               onReorder={onGalleryReorder}
               onRemove={onGalleryRemove}

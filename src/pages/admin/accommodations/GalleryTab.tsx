@@ -14,6 +14,7 @@ interface GalleryTabProps {
   images: GalleryImage[];
   isCreating: boolean;
   accommodationId: string;
+  thumbnailUrl: string | null;
   onAddImage: () => void;
   onReorder: (images: GalleryImage[]) => void;
   onRemove: (imageId: string) => void;
@@ -23,6 +24,7 @@ export default function GalleryTab({
   images,
   isCreating,
   accommodationId,
+  thumbnailUrl,
   onAddImage,
   onReorder,
   onRemove,
@@ -71,7 +73,7 @@ export default function GalleryTab({
         <div>
           <h3 className="font-medium text-gray-900">Gallery Images</h3>
           <p className="text-sm text-gray-500 mt-1">
-            Add images that will be shown in the accommodation gallery. The first image will be used as the primary image.
+            Add images that will be shown in the accommodation gallery. The <strong>Thumbnail image</strong> set in Basic tab will always be shown first.
           </p>
         </div>
         <button
@@ -106,9 +108,14 @@ export default function GalleryTab({
               <div className="aspect-square rounded-lg overflow-hidden bg-gray-100">
                 <img src={img.image_url} alt={img.alt_text_en || ''} className="w-full h-full object-cover" />
               </div>
-              {index === 0 && (
-                <span className="absolute top-2 left-2 px-2 py-1 bg-primary text-white text-xs rounded-full">
-                  Primary
+              {thumbnailUrl === img.image_url && (
+                <span className="absolute top-2 left-2 px-2 py-1 bg-amber-500 text-white text-xs rounded-full shadow-sm">
+                  Main Thumbnail
+                </span>
+              )}
+              {index === 0 && thumbnailUrl !== img.image_url && (
+                <span className="absolute top-2 left-2 px-2 py-1 bg-gray-600 text-white text-xs rounded-full shadow-sm">
+                  First Gallery Image
                 </span>
               )}
               <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center gap-2">
