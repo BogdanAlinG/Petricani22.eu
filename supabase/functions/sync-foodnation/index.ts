@@ -720,6 +720,25 @@ Deno.serve(async (req: Request) => {
       });
     }
 
+    const token = authHeader.replace("Bearer ", "");
+    try {
+      // Simple base64 decoding for debugging purposes
+      const parts = token.split('.');
+      if (parts.length === 3) {
+        const payload = JSON.parse(atob(parts[1]));
+        console.log("JWT Claims:", {
+          aud: payload.aud,
+          role: payload.role,
+          sub: payload.sub,
+          email: payload.email,
+        });
+      } else {
+        console.error("JWT is not in 3-part format");
+      }
+    } catch (e) {
+      console.error("Failed to decode JWT payload:", e);
+    }
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -729,7 +748,7 @@ Deno.serve(async (req: Request) => {
       global: { headers: { Authorization: authHeader } },
     });
 
-    console.log("Verifying user via userClient...");
+    console.log("Verifying user via userClient.auth.getUser()...");
     const {
       data: { user },
       error: authError,
@@ -738,6 +757,7 @@ Deno.serve(async (req: Request) => {
     if (authError || !user) {
       console.error("Authentication check failed:", {
         error: authError?.message || "User not found",
+        errorDetails: authError,
         hasUser: !!user,
       });
       return new Response(JSON.stringify({ 

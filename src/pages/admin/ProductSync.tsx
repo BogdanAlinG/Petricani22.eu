@@ -182,8 +182,21 @@ export default function ProductSync() {
     setError(null);
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error('No active session. Please log in again.');
+      }
+
+      console.log("Starting sync. User:", session.user.email);
+
       const { data: syncData, error: syncInvokeError } = await supabase.functions.invoke(
-        'sync-foodnation'
+        'sync-foodnation',
+        {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`
+          }
+        }
       );
 
       if (syncInvokeError) {
