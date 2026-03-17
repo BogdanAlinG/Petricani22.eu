@@ -721,35 +721,28 @@ Deno.serve(async (req: Request) => {
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    console.log("Initializing Supabase service client...");
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    // More robust way to get user in Edge Functions
-    const token = authHeader.replace("Bearer ", "");
-    console.log("Token verification details:", {
-      headerLength: authHeader.length,
-      tokenLength: token.length,
-      tokenStart: token.substring(0, 15) + "...",
+    // Create a client with the user's token for authentication check
+    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
     });
-    
-    console.log("Verifying user token...");
-    
+
+    console.log("Verifying user via userClient...");
     const {
       data: { user },
       error: authError,
-    } = await supabase.auth.getUser(token);
+    } = await userClient.auth.getUser();
 
     if (authError || !user) {
       console.error("Authentication check failed:", {
         error: authError?.message || "User not found",
-        errorDetails: authError,
         hasUser: !!user,
       });
       return new Response(JSON.stringify({ 
         error: "Unauthorized", 
-        details: authError?.message || "User not found or session invalid" 
+        details: authError?.message || "Invalid session" 
       }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -757,6 +750,7 @@ Deno.serve(async (req: Request) => {
     }
 
     console.log("User authenticated:", user.id);
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const { data: config, error: configError } = await supabase
       .from("sync_configurations")

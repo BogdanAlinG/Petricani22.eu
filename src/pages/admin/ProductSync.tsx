@@ -182,32 +182,12 @@ export default function ProductSync() {
     setError(null);
 
     try {
-      const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
-      if (refreshError || !refreshData.session) {
-        throw new Error('Session expired. Please log in again.');
-      }
+      const { data: syncData, error: syncInvokeError } = await supabase.functions.invoke(
+        'sync-foodnation'
+      );
 
-      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/sync-foodnation`;
-
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${refreshData.session.access_token}`,
-          'Content-Type': 'application/json',
-          apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
-        },
-      });
-
-      if (!response.ok) {
-        const text = await response.text();
-        let errorMessage = `Sync failed with status ${response.status}`;
-        try {
-          const errorData = JSON.parse(text);
-          errorMessage = errorData.error || errorData.details || errorMessage;
-        } catch {
-          if (text) errorMessage = text;
-        }
-        throw new Error(errorMessage);
+      if (syncInvokeError) {
+        throw new Error(syncInvokeError.message || 'Sync failed');
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Sync failed';
