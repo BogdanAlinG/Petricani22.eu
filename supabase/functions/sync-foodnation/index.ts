@@ -694,12 +694,6 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    console.log("Request received:", {
-      method: req.method,
-      url: req.url,
-      headers: Object.fromEntries(req.headers.entries()),
-    });
-
     const openaiApiKey = Deno.env.get("OPENAI_API_KEY");
     if (!openaiApiKey) {
       return new Response(
@@ -713,16 +707,15 @@ Deno.serve(async (req: Request) => {
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      console.error("No Authorization header provided");
       return new Response(JSON.stringify({ error: "Missing authorization" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
+    // Auth check using manual JWT decode first for logging, then verify via getUser
     const token = authHeader.replace("Bearer ", "");
     try {
-      // Simple base64 decoding for debugging purposes
       const parts = token.split('.');
       if (parts.length === 3) {
         const payload = JSON.parse(atob(parts[1]));
@@ -732,46 +725,35 @@ Deno.serve(async (req: Request) => {
           sub: payload.sub,
           email: payload.email,
         });
-      } else {
-        console.error("JWT is not in 3-part format");
       }
     } catch (e) {
-      console.error("Failed to decode JWT payload:", e);
+      console.warn("Manual JWT decode failed:", e.message);
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    // Create a client with the user's token for authentication check
     const userClient = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } },
     });
 
-    console.log("Verifying user via userClient.auth.getUser()...");
     const {
       data: { user },
       error: authError,
     } = await userClient.auth.getUser();
 
     if (authError || !user) {
-      console.error("Authentication check failed:", {
-        error: authError?.message || "User not found",
-        errorDetails: authError,
-        hasUser: !!user,
-      });
-      return new Response(JSON.stringify({ 
-        error: "Unauthorized", 
-        details: authError?.message || "Invalid session" 
-      }), {
+      console.error("Auth failed:", authError?.message);
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    console.log("User authenticated:", user.id);
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Initial config check
     const { data: config, error: configError } = await supabase
       .from("sync_configurations")
       .select("*")
@@ -779,28 +761,20 @@ Deno.serve(async (req: Request) => {
       .maybeSingle();
 
     if (configError || !config) {
-      return new Response(
-        JSON.stringify({
-          error: "Sync configuration not found",
-          details: configError?.message,
-        }),
-        {
-          status: 404,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
+      return new Response(JSON.stringify({ error: "Sync config not found" }), {
+        status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     if (!config.is_active) {
-      return new Response(
-        JSON.stringify({ error: "Sync is currently disabled" }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
+      return new Response(JSON.stringify({ error: "Sync is disabled" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
+    // Check if already running
     const { data: existingRunning } = await supabase
       .from("sync_logs")
       .select("id")
@@ -810,539 +784,233 @@ Deno.serve(async (req: Request) => {
       .maybeSingle();
 
     if (existingRunning) {
-      return new Response(
-        JSON.stringify({ error: "A sync is already in progress" }),
-        {
-          status: 409,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
+      return new Response(JSON.stringify({ error: "Sync already in progress" }), {
+        status: 409,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
-    const skipIfSyncedWithinHours = config.skip_if_synced_within_hours ?? 24;
-    const skipThreshold = new Date();
-    skipThreshold.setHours(skipThreshold.getHours() - skipIfSyncedWithinHours);
-
+    // Create log entry immediately so the frontend has an ID to poll
     const { data: logEntry, error: logError } = await supabase
       .from("sync_logs")
       .insert({
         configuration_id: config.id,
         status: "running",
-        current_phase: "Initializing sync...",
+        current_phase: "Starting background sync...",
       })
       .select()
       .single();
 
-    if (logError) {
-      return new Response(
-        JSON.stringify({
-          error: "Failed to create sync log",
-          details: logError.message,
-        }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    }
+    if (logError) throw logError;
 
-    const logId = logEntry.id;
+    // --- BACKGROUND TASK START ---
+    const runSyncTask = async () => {
+      const logId = logEntry.id;
+      const progress: SyncProgress = {
+        current: 0,
+        total: 0,
+        created: 0,
+        updated: 0,
+        skipped: 0,
+        failed: 0,
+      };
 
-    const progress: SyncProgress = {
-      current: 0,
-      total: 0,
-      created: 0,
-      updated: 0,
-      skipped: 0,
-      failed: 0,
-    };
+      const aiStats: AIStats = {
+        cleaningAttempts: 0,
+        cleaningSuccesses: 0,
+        cleaningFailures: 0,
+        translationAttempts: 0,
+        translationSuccesses: 0,
+        translationFailures: 0,
+        errors: [],
+      };
 
-    const aiStats: AIStats = {
-      cleaningAttempts: 0,
-      cleaningSuccesses: 0,
-      cleaningFailures: 0,
-      translationAttempts: 0,
-      translationSuccesses: 0,
-      translationFailures: 0,
-      errors: [],
-    };
-
-    try {
-      const { data: orphanedEntries } = await supabase
-        .from("synced_products")
-        .select("id, product_id")
-        .eq("source_name", "foodnation");
-
-      if (orphanedEntries && orphanedEntries.length > 0) {
-        const allProductIds = orphanedEntries.map((e) => e.product_id);
-        const { data: existingProducts } = await supabase
-          .from("products")
-          .select("id")
-          .in("id", allProductIds);
-
-        const existingProductIds = new Set((existingProducts || []).map((p) => p.id));
-        const orphanedIds = orphanedEntries
-          .filter((e) => !existingProductIds.has(e.product_id))
-          .map((e) => e.id);
-
-        if (orphanedIds.length > 0) {
-          await supabase
-            .from("synced_products")
-            .delete()
-            .in("id", orphanedIds);
-
-          console.log(`Cleaned up ${orphanedIds.length} orphaned synced_products entries`);
-        }
-      }
-
-      let cancelResponse = await handleCancellation(supabase, logId, progress, "Cancelled before fetching products");
-      if (cancelResponse) return cancelResponse;
-
-      await updateProgress(supabase, logId, progress, "Fetching products from FoodNation...");
-
-      let allProducts: ShopifyProduct[] = [];
-      let page = 1;
-      const limit = 250;
-
-      while (true) {
-        cancelResponse = await handleCancellation(supabase, logId, progress, "Cancelled while fetching products");
-        if (cancelResponse) return cancelResponse;
-
-        const response = await fetchWithTimeout(
-          `${config.source_url}?limit=${limit}&page=${page}`,
-          { method: "GET" },
-          60000
-        );
-        if (!response.ok) {
-          throw new Error(`Failed to fetch products: ${response.statusText}`);
+      try {
+        console.log(`[Task ${logId}] Background sync started`);
+        
+        // Fetch products
+        let allProducts: ShopifyProduct[] = [];
+        let page = 1;
+        const limit = 250;
+        while (true) {
+          const response = await fetchWithTimeout(`${config.source_url}?limit=${limit}&page=${page}`, { method: "GET" }, 60000);
+          if (!response.ok) throw new Error(`Fetch failed: ${response.status}`);
+          const data: ShopifyResponse = await response.json();
+          if (!data.products || data.products.length === 0) break;
+          allProducts = allProducts.concat(data.products);
+          if (data.products.length < limit) break;
+          page++;
+          if (page > 10) break;
         }
 
-        const data: ShopifyResponse = await response.json();
-        if (!data.products || data.products.length === 0) {
-          break;
-        }
+        const [categoriesRes, allergensRes] = await Promise.all([
+          supabase.from("categories").select("id, name_ro, name_en, slug"),
+          supabase.from("allergens").select("id, name_en, name_ro"),
+        ]);
+        const categories = categoriesRes.data || [];
+        const allergenRecords = allergensRes.data || [];
+        const exchangeRate = await getExchangeRate(supabase);
+        const skipIfSyncedWithinHours = config.skip_if_synced_within_hours ?? 24;
+        const skipThreshold = new Date();
+        skipThreshold.setHours(skipThreshold.getHours() - skipIfSyncedWithinHours);
 
-        allProducts = allProducts.concat(data.products);
-        if (data.products.length < limit) {
-          break;
-        }
-        page++;
+        // Prep products
+        const productsToProcess: ShopifyProduct[] = [];
+        const categoryMappings: CategoryMapping = config.category_mappings || {};
+        const itemsPerCategory = config.items_per_category_limit || null;
+        const processedInCategory: Record<string, number> = {};
 
-        if (page > 10) break;
-      }
-
-      const [categoriesResult, allergensResult] = await Promise.all([
-        supabase.from("categories").select("id, name_ro, name_en, slug"),
-        supabase.from("allergens").select("id, name_en, name_ro"),
-      ]);
-
-      if (categoriesResult.error) {
-        throw new Error(`Failed to fetch categories: ${categoriesResult.error.message}`);
-      }
-      const categories = categoriesResult.data;
-      const allergenRecords: AllergenRecord[] = allergensResult.data || [];
-
-      let categoryMappings: CategoryMapping = config.category_mappings || {};
-
-      if (Object.keys(categoryMappings).length === 0 && categories) {
-        const defaultMappings: CategoryMapping = {};
-        for (const cat of categories) {
-          const keywords = [
-            cat.slug,
-            cat.name_ro?.toLowerCase(),
-            cat.name_en?.toLowerCase(),
-          ].filter(Boolean);
-          for (const keyword of keywords) {
-            if (keyword) {
-              defaultMappings[keyword] = cat.id;
-            }
-          }
-        }
-        categoryMappings = defaultMappings;
-      }
-
-      const productsByCategory: { [categoryId: string]: ShopifyProduct[] } = {};
-      const uncategorized: ShopifyProduct[] = [];
-
-      for (const product of allProducts) {
-        const categoryId = categorizeProduct(product, categoryMappings);
-        if (categoryId) {
-          if (!productsByCategory[categoryId]) {
-            productsByCategory[categoryId] = [];
-          }
-          productsByCategory[categoryId].push(product);
-        } else {
-          uncategorized.push(product);
-        }
-      }
-
-      let defaultCategoryId: string | null = null;
-      if (categories && categories.length > 0) {
-        defaultCategoryId = categories[0].id;
-      }
-
-      if (defaultCategoryId && uncategorized.length > 0) {
-        if (!productsByCategory[defaultCategoryId]) {
-          productsByCategory[defaultCategoryId] = [];
-        }
-        productsByCategory[defaultCategoryId].push(...uncategorized);
-      }
-
-      const exchangeRate = await getExchangeRate(supabase);
-
-      const itemsPerCategory = config.items_per_category_limit || null;
-
-      let totalProductsToProcess = 0;
-      for (const [, products] of Object.entries(productsByCategory)) {
-        const count = itemsPerCategory
-          ? Math.min(products.length, itemsPerCategory)
-          : products.length;
-        totalProductsToProcess += count;
-      }
-
-      progress.total = totalProductsToProcess;
-      await updateProgress(supabase, logId, progress, "Starting product sync...");
-
-      const categoryNames: Record<string, string> = {};
-      if (categories) {
-        for (const cat of categories) {
-          categoryNames[cat.id] = cat.name_en || cat.name_ro || cat.slug;
-        }
-      }
-
-      for (const [categoryId, products] of Object.entries(productsByCategory)) {
-        cancelResponse = await handleCancellation(supabase, logId, progress, "Cancelled during product processing");
-        if (cancelResponse) return cancelResponse;
-
-        const categoryName = categoryNames[categoryId] || "Unknown";
-        const productsToSync = itemsPerCategory
-          ? products.slice(0, itemsPerCategory)
-          : products;
-
-        const skippedDueToLimit = products.length - productsToSync.length;
-        for (let i = productsToSync.length; i < products.length; i++) {
-          const skippedProduct = products[i];
-          await logProductDetail(
-            supabase,
-            logId,
-            skippedProduct.id.toString(),
-            skippedProduct.title,
-            "skipped",
-            "Category limit reached"
-          );
-        }
-        progress.skipped += skippedDueToLimit;
-
-        for (const product of productsToSync) {
-          cancelResponse = await handleCancellation(supabase, logId, progress, "Cancelled during product processing");
-          if (cancelResponse) return cancelResponse;
-
-          progress.current++;
-          await updateProgress(
-            supabase,
-            logId,
-            progress,
-            `Processing: ${product.title.substring(0, 50)}... (${categoryName})`
-          );
-
-          const { data: existing } = await supabase
-            .from("synced_products")
-            .select("id, product_id, last_synced_at")
-            .eq("source_name", "foodnation")
-            .eq("source_id", product.id.toString())
-            .maybeSingle();
-
-          if (existing && existing.last_synced_at) {
-            const lastSyncedAt = new Date(existing.last_synced_at);
-            if (lastSyncedAt > skipThreshold) {
-              const hoursAgo = Math.round(
-                (Date.now() - lastSyncedAt.getTime()) / (1000 * 60 * 60)
-              );
-              await logProductDetail(
-                supabase,
-                logId,
-                product.id.toString(),
-                product.title,
-                "skipped",
-                `Recently synced (${hoursAgo}h ago, threshold: ${skipIfSyncedWithinHours}h)`
-              );
+        for (const p of allProducts) {
+          const categoryId = categorizeProduct(p, categoryMappings) || (categories[0]?.id);
+          if (!categoryId) continue;
+          
+          if (itemsPerCategory) {
+            processedInCategory[categoryId] = (processedInCategory[categoryId] || 0) + 1;
+            if (processedInCategory[categoryId] > itemsPerCategory) {
               progress.skipped++;
               continue;
             }
           }
-
-          const ingredientsRaw = extractIngredients(product.body_html || "");
-          const descriptionRaw = cleanDescription(product.body_html || "");
-          const shortDescriptionRaw = extractFirstTwoSentences(descriptionRaw);
-          const allergens = extractAllergens(product.body_html || "");
-          const dietaryTags = extractDietaryTags(product.tags || "");
-          const priceInRon = product.variants?.[0]?.price
-            ? parseFloat(product.variants[0].price)
-            : 0;
-          const basePrice = Math.round((priceInRon / exchangeRate) * 100) / 100;
-          const imageUrl = product.images?.[0]?.src || "";
-
-          const aiResult = await cleanAndTranslateWithAI(
-            product.title,
-            shortDescriptionRaw,
-            descriptionRaw,
-            ingredientsRaw,
-            openaiApiKey,
-            aiStats
-          );
-
-          cancelResponse = await handleCancellation(supabase, logId, progress, "Cancelled after AI processing");
-          if (cancelResponse) return cancelResponse;
-
-          const slugEn = generateSlug(aiResult.title.cleanedEn);
-          const slugRo = generateSlug(aiResult.title.cleanedRo);
-
-          const productData = {
-            category_id: categoryId,
-            title_en: aiResult.title.cleanedEn,
-            title_ro: aiResult.title.cleanedRo,
-            short_description_en: aiResult.shortDescription.cleanedEn,
-            short_description_ro: aiResult.shortDescription.cleanedRo,
-            full_description_en: aiResult.fullDescription.cleanedEn,
-            full_description_ro: aiResult.fullDescription.cleanedRo,
-            ingredients_en: aiResult.ingredients.cleanedEn,
-            ingredients_ro: aiResult.ingredients.cleanedRo,
-            base_price: basePrice,
-            image_url: imageUrl,
-            allergen_info: allergens,
-            dietary_tags: dietaryTags,
-            is_available: product.variants?.some((v) => v.available) ?? true,
-            updated_at: new Date().toISOString(),
-          };
-
-          if (existing) {
-            const uniqueSlug = await getUniqueSlug(supabase, slugEn, "slug", existing.product_id);
-            const uniqueSlugRo = await getUniqueSlug(supabase, slugRo, "slug_ro", existing.product_id);
-
-            const { error: updateError } = await supabase
-              .from("products")
-              .update({ ...productData, slug: uniqueSlug, slug_ro: uniqueSlugRo })
-              .eq("id", existing.product_id);
-
-            if (updateError) {
-              await logProductDetail(
-                supabase,
-                logId,
-                product.id.toString(),
-                product.title,
-                "failed",
-                undefined,
-                `Update failed: ${updateError.message}`
-              );
-              progress.failed++;
-              continue;
-            }
-
-            if (product.variants && product.variants.length > 1) {
-              await supabase
-                .from("product_sizes")
-                .delete()
-                .eq("product_id", existing.product_id);
-
-              const sizes = await Promise.all(
-                product.variants.map(async (variant, index) => {
-                  const variantPriceRon = parseFloat(variant.price);
-                  const variantPriceEur = Math.round((variantPriceRon / exchangeRate) * 100) / 100;
-                  const sizeNameEn = await translateToEnglish(variant.title, openaiApiKey, aiStats);
-                  return {
-                    product_id: existing.product_id,
-                    size_name_en: sizeNameEn,
-                    size_name_ro: variant.title,
-                    price_modifier: variantPriceEur - basePrice,
-                    is_available: variant.available,
-                    display_order: index,
-                  };
-                })
-              );
-
-              await supabase.from("product_sizes").insert(sizes);
-            }
-
-            await matchAllergens(supabase, existing.product_id, allergens, allergenRecords);
-
-            await supabase
-              .from("synced_products")
-              .update({
-                source_data: product,
-                last_synced_at: new Date().toISOString(),
-              })
-              .eq("id", existing.id);
-
-            await logProductDetail(
-              supabase,
-              logId,
-              product.id.toString(),
-              product.title,
-              "updated"
-            );
-            progress.updated++;
-          } else {
-            const uniqueSlug = await getUniqueSlug(supabase, slugEn, "slug");
-            const uniqueSlugRo = await getUniqueSlug(supabase, slugRo, "slug_ro");
-
-            const { data: newProduct, error: insertError } = await supabase
-              .from("products")
-              .insert({ ...productData, slug: uniqueSlug, slug_ro: uniqueSlugRo })
-              .select("id")
-              .single();
-
-            if (insertError) {
-              console.error(
-                `Failed to insert product ${product.title}:`,
-                insertError
-              );
-              await logProductDetail(
-                supabase,
-                logId,
-                product.id.toString(),
-                product.title,
-                "failed",
-                undefined,
-                `Insert failed: ${insertError.message}`
-              );
-              progress.failed++;
-              continue;
-            }
-
-            await supabase.from("synced_products").insert({
-              product_id: newProduct.id,
-              source_id: product.id.toString(),
-              source_name: "foodnation",
-              source_data: product,
-            });
-
-            if (product.variants && product.variants.length > 1) {
-              const sizes = await Promise.all(
-                product.variants.map(async (variant, index) => {
-                  const variantPriceRon = parseFloat(variant.price);
-                  const variantPriceEur = Math.round((variantPriceRon / exchangeRate) * 100) / 100;
-                  const sizeNameEn = await translateToEnglish(variant.title, openaiApiKey, aiStats);
-                  return {
-                    product_id: newProduct.id,
-                    size_name_en: sizeNameEn,
-                    size_name_ro: variant.title,
-                    price_modifier: variantPriceEur - basePrice,
-                    is_available: variant.available,
-                    display_order: index,
-                  };
-                })
-              );
-
-              await supabase.from("product_sizes").insert(sizes);
-            }
-
-            await matchAllergens(supabase, newProduct.id, allergens, allergenRecords);
-
-            await logProductDetail(
-              supabase,
-              logId,
-              product.id.toString(),
-              product.title,
-              "created"
-            );
-            progress.created++;
-          }
+          productsToProcess.push({ ...p, category_id_internal: categoryId } as any);
         }
-      }
 
-      await supabase
-        .from("sync_logs")
-        .update({
+        progress.total = productsToProcess.length;
+        await updateProgress(supabase, logId, progress, "Processing products in parallel batches...");
+
+        // --- Parallel Processing Logic ---
+        const BATCH_SIZE = 5;
+        for (let i = 0; i < productsToProcess.length; i += BATCH_SIZE) {
+          if (await checkCancellation(supabase, logId)) {
+            await handleCancellation(supabase, logId, progress, "Cancelled during processing");
+            return;
+          }
+
+          const batch = productsToProcess.slice(i, i + BATCH_SIZE);
+          await Promise.all(batch.map(async (product: any) => {
+            try {
+              const categoryId = product.category_id_internal;
+              
+              const { data: existing } = await supabase
+                .from("synced_products")
+                .select("id, product_id, last_synced_at")
+                .eq("source_name", "foodnation")
+                .eq("source_id", product.id.toString())
+                .maybeSingle();
+
+              if (existing?.last_synced_at && new Date(existing.last_synced_at) > skipThreshold) {
+                progress.skipped++;
+                progress.current++;
+                return;
+              }
+
+              const ingredientsRaw = extractIngredients(product.body_html || "");
+              const descriptionRaw = cleanDescription(product.body_html || "");
+              const shortDescriptionRaw = extractFirstTwoSentences(descriptionRaw);
+              const priceRon = parseFloat(product.variants?.[0]?.price || "0");
+              const basePrice = Math.round((priceRon / exchangeRate) * 100) / 100;
+
+              const aiResult = await cleanAndTranslateWithAI(
+                product.title,
+                shortDescriptionRaw,
+                descriptionRaw,
+                ingredientsRaw,
+                openaiApiKey,
+                aiStats
+              );
+
+              const productData = {
+                category_id: categoryId,
+                title_en: aiResult.title.cleanedEn,
+                title_ro: aiResult.title.cleanedRo,
+                short_description_en: aiResult.shortDescription.cleanedEn,
+                short_description_ro: aiResult.shortDescription.cleanedRo,
+                full_description_en: aiResult.fullDescription.cleanedEn,
+                full_description_ro: aiResult.fullDescription.cleanedRo,
+                ingredients_en: aiResult.ingredients.cleanedEn,
+                ingredients_ro: aiResult.ingredients.cleanedRo,
+                base_price: basePrice,
+                image_url: product.images?.[0]?.src || "",
+                allergen_info: extractAllergens(product.body_html || ""),
+                dietary_tags: extractDietaryTags(product.tags || ""),
+                is_available: product.variants?.some((v: any) => v.available) ?? true,
+                updated_at: new Date().toISOString(),
+              };
+
+              const slugEn = generateSlug(aiResult.title.cleanedEn);
+              const slugRo = generateSlug(aiResult.title.cleanedRo);
+
+              if (existing) {
+                const uniqueSlug = await getUniqueSlug(supabase, slugEn, "slug", existing.product_id);
+                const uniqueSlugRo = await getUniqueSlug(supabase, slugRo, "slug_ro", existing.product_id);
+                await supabase.from("products").update({ ...productData, slug: uniqueSlug, slug_ro: uniqueSlugRo }).eq("id", existing.product_id);
+                await supabase.from("synced_products").update({ last_synced_at: new Date().toISOString() }).eq("id", existing.id);
+                progress.updated++;
+              } else {
+                const uniqueSlug = await getUniqueSlug(supabase, slugEn, "slug");
+                const uniqueSlugRo = await getUniqueSlug(supabase, slugRo, "slug_ro");
+                const { data: newP } = await supabase.from("products").insert({ ...productData, slug: uniqueSlug, slug_ro: uniqueSlugRo }).select("id").single();
+                if (newP) {
+                  await supabase.from("synced_products").insert({ product_id: newP.id, source_id: product.id.toString(), source_name: "foodnation", source_data: product });
+                  progress.created++;
+                }
+              }
+              progress.current++;
+            } catch (err) {
+              console.error(`Error processing ${product.title}:`, err);
+              progress.failed++;
+              progress.current++;
+            }
+          }));
+
+          // Batch progress update
+          await updateProgress(supabase, logId, progress, `Processing: ${i + batch.length}/${productsToProcess.length}`);
+        }
+
+        await supabase.from("sync_logs").update({
           status: "completed",
           products_synced: progress.created + progress.updated,
           products_skipped: progress.skipped,
           products_failed: progress.failed,
           products_created: progress.created,
           products_updated: progress.updated,
-          current_phase: "Sync completed successfully",
           completed_at: new Date().toISOString(),
-        })
-        .eq("id", logId);
+          current_phase: "Sync completed successfully"
+        }).eq("id", logId);
 
-      await supabase
-        .from("sync_configurations")
-        .update({ last_sync_at: new Date().toISOString() })
-        .eq("id", config.id);
+        await supabase
+          .from("sync_configurations")
+          .update({ last_sync_at: new Date().toISOString() })
+          .eq("id", config.id);
 
-      const aiTotalCalls = aiStats.cleaningAttempts + aiStats.translationAttempts;
-      const aiTotalSuccesses = aiStats.cleaningSuccesses + aiStats.translationSuccesses;
-
-      return new Response(
-        JSON.stringify({
-          success: true,
-          products_created: progress.created,
-          products_updated: progress.updated,
-          products_skipped: progress.skipped,
-          products_failed: progress.failed,
-          categories_processed: Object.keys(productsByCategory).length,
-          ai_stats: {
-            total_calls: aiTotalCalls,
-            total_successes: aiTotalSuccesses,
-            total_failures: aiStats.cleaningFailures + aiStats.translationFailures,
-            success_rate: aiTotalCalls > 0 ? Math.round((aiTotalSuccesses / aiTotalCalls) * 100) : 100,
-            cleaning: {
-              attempts: aiStats.cleaningAttempts,
-              successes: aiStats.cleaningSuccesses,
-              failures: aiStats.cleaningFailures,
-            },
-            translation: {
-              attempts: aiStats.translationAttempts,
-              successes: aiStats.translationSuccesses,
-              failures: aiStats.translationFailures,
-            },
-            errors: aiStats.errors,
-          },
-        }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    } catch (innerError) {
-      console.error("Sync processing error:", innerError);
-
-      await supabase
-        .from("sync_logs")
-        .update({
+      } catch (err) {
+        console.error("Background sync task failed:", err);
+        await supabase.from("sync_logs").update({
           status: "failed",
-          error_message: innerError instanceof Error ? innerError.message : "Unknown error",
-          current_phase: "Sync failed",
-          products_synced: progress.created + progress.updated,
-          products_skipped: progress.skipped,
-          products_failed: progress.failed,
-          products_created: progress.created,
-          products_updated: progress.updated,
-          completed_at: new Date().toISOString(),
-        })
-        .eq("id", logId);
-
-      return new Response(
-        JSON.stringify({
-          error: "Sync failed",
-          details: innerError instanceof Error ? innerError.message : "Unknown error",
-        }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    }
-  } catch (error) {
-    console.error("Sync error:", error);
-
-    return new Response(
-      JSON.stringify({
-        error: "Sync failed",
-        details: error instanceof Error ? error.message : "Unknown error",
-      }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+          error_message: String(err),
+          completed_at: new Date().toISOString()
+        }).eq("id", logId);
       }
-    );
+    };
+
+    // Use EdgeRuntime.waitUntil for background execution
+    // @ts-ignore: EdgeRuntime is available in Supabase Edge Functions
+    EdgeRuntime.waitUntil(runSyncTask());
+
+    return new Response(JSON.stringify({ 
+      success: true, 
+      message: "Sync started in background", 
+      log_id: logEntry.id 
+    }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 202
+    });
+
+  } catch (error) {
+    console.error("Sync serve error:", error);
+    return new Response(JSON.stringify({ error: String(error) }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 });
+

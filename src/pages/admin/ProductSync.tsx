@@ -202,6 +202,14 @@ export default function ProductSync() {
       if (syncInvokeError) {
         throw new Error(syncInvokeError.message || 'Sync failed');
       }
+
+      // If we got a log_id back, we can proactively set it instead of waiting for realtime
+      if (syncData?.log_id) {
+        setRunningLogId(syncData.log_id);
+        runningLogIdRef.current = syncData.log_id;
+        setSyncing(true);
+        setSyncStarting(false);
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Sync failed';
       setError(message);
