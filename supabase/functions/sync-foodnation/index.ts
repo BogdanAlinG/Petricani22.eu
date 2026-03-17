@@ -368,7 +368,7 @@ async function cleanAndTranslateWithAI(
           Authorization: `Bearer ${openaiApiKey}`,
         },
         body: JSON.stringify({
-          model: "gpt-4.1",
+          model: "gpt-4o",
           messages: [
             { role: "system", content: AI_CLEANING_SYSTEM_PROMPT },
             { role: "user", content: userContent },
@@ -803,11 +803,19 @@ Deno.serve(async (req: Request) => {
 
     if (logError) throw logError;
 
+    // Parse request body for chaining
+    const payload = await req.json().catch(() => ({}));
+    const { 
+      log_id: existingLogId,
+      offset = 0,
+      limit = 10 
+    } = payload;
+
     // --- BACKGROUND TASK START ---
     const runSyncTask = async () => {
-      const logId = logEntry.id;
+      let logId = existingLogId;
       const progress: SyncProgress = {
-        current: 0,
+        current: offset,
         total: 0,
         created: 0,
         updated: 0,
@@ -816,29 +824,52 @@ Deno.serve(async (req: Request) => {
       };
 
       const aiStats: AIStats = {
-        cleaningAttempts: 0,
-        cleaningSuccesses: 0,
-        cleaningFailures: 0,
-        translationAttempts: 0,
-        translationSuccesses: 0,
-        translationFailures: 0,
+        cleaningAttempts: 0, cleaningSuccesses: 0, cleaningFailures: 0,
+        translationAttempts: 0, translationSuccesses: 0, translationFailures: 0,
         errors: [],
       };
 
       try {
-        console.log(`[Task ${logId}] Background sync started`);
-        
-        // Fetch products
+        // 1. Initial Setup or Resume
+        if (!logId) {
+          const { data: newLog, error: logError } = await supabase
+            .from("sync_logs")
+            .insert({
+              status: "running",
+              current_phase: "Fetching products...",
+              progress_current: 0,
+              progress_total: 0,
+              configuration_id: config.id
+            })
+            .select("id")
+            .single();
+
+          if (logError) throw logError;
+          logId = newLog.id;
+        } else {
+          // Resume: Load current progress stats from DB
+          const { data: log } = await supabase.from("sync_logs").select("*").eq("id", logId).single();
+          if (log) {
+            progress.total = log.progress_total || 0;
+            progress.created = log.products_created || 0;
+            progress.updated = log.products_updated || 0;
+            progress.skipped = log.products_skipped || 0;
+            progress.failed = log.products_failed || 0;
+            progress.current = log.progress_current || offset;
+          }
+        }
+
+        // 2. Fetch Source Data
         let allProducts: ShopifyProduct[] = [];
         let page = 1;
-        const limit = 250;
+        const fetchLimit = 250;
         while (true) {
-          const response = await fetchWithTimeout(`${config.source_url}?limit=${limit}&page=${page}`, { method: "GET" }, 60000);
+          const response = await fetchWithTimeout(`${config.source_url}?limit=${fetchLimit}&page=${page}`, { method: "GET" }, 60000);
           if (!response.ok) throw new Error(`Fetch failed: ${response.status}`);
           const data: ShopifyResponse = await response.json();
           if (!data.products || data.products.length === 0) break;
           allProducts = allProducts.concat(data.products);
-          if (data.products.length < limit) break;
+          if (data.products.length < fetchLimit) break;
           page++;
           if (page > 10) break;
         }
@@ -848,14 +879,13 @@ Deno.serve(async (req: Request) => {
           supabase.from("allergens").select("id, name_en, name_ro"),
         ]);
         const categories = categoriesRes.data || [];
-        const allergenRecords = allergensRes.data || [];
         const exchangeRate = await getExchangeRate(supabase);
         const skipIfSyncedWithinHours = config.skip_if_synced_within_hours ?? 24;
         const skipThreshold = new Date();
         skipThreshold.setHours(skipThreshold.getHours() - skipIfSyncedWithinHours);
 
         // Prep products
-        const productsToProcess: ShopifyProduct[] = [];
+        const productsToProcess: any[] = [];
         const categoryMappings: CategoryMapping = config.category_mappings || {};
         const itemsPerCategory = config.items_per_category_limit || null;
         const processedInCategory: Record<string, number> = {};
@@ -863,143 +893,162 @@ Deno.serve(async (req: Request) => {
         for (const p of allProducts) {
           const categoryId = categorizeProduct(p, categoryMappings) || (categories[0]?.id);
           if (!categoryId) continue;
-          
           if (itemsPerCategory) {
             processedInCategory[categoryId] = (processedInCategory[categoryId] || 0) + 1;
-            if (processedInCategory[categoryId] > itemsPerCategory) {
-              progress.skipped++;
-              continue;
-            }
+            if (processedInCategory[categoryId] > itemsPerCategory) continue;
           }
-          productsToProcess.push({ ...p, category_id_internal: categoryId } as any);
+          productsToProcess.push({ ...p, category_id_internal: categoryId });
         }
 
         progress.total = productsToProcess.length;
-        await updateProgress(supabase, logId, progress, "Processing products in parallel batches...");
-
-        // --- Parallel Processing Logic ---
-        const BATCH_SIZE = 5;
-        for (let i = 0; i < productsToProcess.length; i += BATCH_SIZE) {
-          if (await checkCancellation(supabase, logId)) {
-            await handleCancellation(supabase, logId, progress, "Cancelled during processing");
-            return;
-          }
-
-          const batch = productsToProcess.slice(i, i + BATCH_SIZE);
-          await Promise.all(batch.map(async (product: any) => {
-            try {
-              const categoryId = product.category_id_internal;
-              
-              const { data: existing } = await supabase
-                .from("synced_products")
-                .select("id, product_id, last_synced_at")
-                .eq("source_name", "foodnation")
-                .eq("source_id", product.id.toString())
-                .maybeSingle();
-
-              if (existing?.last_synced_at && new Date(existing.last_synced_at) > skipThreshold) {
-                progress.skipped++;
-                progress.current++;
-                return;
-              }
-
-              const ingredientsRaw = extractIngredients(product.body_html || "");
-              const descriptionRaw = cleanDescription(product.body_html || "");
-              const shortDescriptionRaw = extractFirstTwoSentences(descriptionRaw);
-              const priceRon = parseFloat(product.variants?.[0]?.price || "0");
-              const basePrice = Math.round((priceRon / exchangeRate) * 100) / 100;
-
-              const aiResult = await cleanAndTranslateWithAI(
-                product.title,
-                shortDescriptionRaw,
-                descriptionRaw,
-                ingredientsRaw,
-                openaiApiKey,
-                aiStats
-              );
-
-              const productData = {
-                category_id: categoryId,
-                title_en: aiResult.title.cleanedEn,
-                title_ro: aiResult.title.cleanedRo,
-                short_description_en: aiResult.shortDescription.cleanedEn,
-                short_description_ro: aiResult.shortDescription.cleanedRo,
-                full_description_en: aiResult.fullDescription.cleanedEn,
-                full_description_ro: aiResult.fullDescription.cleanedRo,
-                ingredients_en: aiResult.ingredients.cleanedEn,
-                ingredients_ro: aiResult.ingredients.cleanedRo,
-                base_price: basePrice,
-                image_url: product.images?.[0]?.src || "",
-                allergen_info: extractAllergens(product.body_html || ""),
-                dietary_tags: extractDietaryTags(product.tags || ""),
-                is_available: product.variants?.some((v: any) => v.available) ?? true,
-                updated_at: new Date().toISOString(),
-              };
-
-              const slugEn = generateSlug(aiResult.title.cleanedEn);
-              const slugRo = generateSlug(aiResult.title.cleanedRo);
-
-              if (existing) {
-                const uniqueSlug = await getUniqueSlug(supabase, slugEn, "slug", existing.product_id);
-                const uniqueSlugRo = await getUniqueSlug(supabase, slugRo, "slug_ro", existing.product_id);
-                await supabase.from("products").update({ ...productData, slug: uniqueSlug, slug_ro: uniqueSlugRo }).eq("id", existing.product_id);
-                await supabase.from("synced_products").update({ last_synced_at: new Date().toISOString() }).eq("id", existing.id);
-                progress.updated++;
-              } else {
-                const uniqueSlug = await getUniqueSlug(supabase, slugEn, "slug");
-                const uniqueSlugRo = await getUniqueSlug(supabase, slugRo, "slug_ro");
-                const { data: newP } = await supabase.from("products").insert({ ...productData, slug: uniqueSlug, slug_ro: uniqueSlugRo }).select("id").single();
-                if (newP) {
-                  await supabase.from("synced_products").insert({ product_id: newP.id, source_id: product.id.toString(), source_name: "foodnation", source_data: product });
-                  progress.created++;
-                }
-              }
-              progress.current++;
-            } catch (err) {
-              console.error(`Error processing ${product.title}:`, err);
-              progress.failed++;
-              progress.current++;
-            }
-          }));
-
-          // Batch progress update
-          await updateProgress(supabase, logId, progress, `Processing: ${i + batch.length}/${productsToProcess.length}`);
+        if (offset === 0) {
+          await supabase.from("sync_logs").update({ progress_total: progress.total }).eq("id", logId);
         }
 
-        await supabase.from("sync_logs").update({
-          status: "completed",
-          products_synced: progress.created + progress.updated,
-          products_skipped: progress.skipped,
-          products_failed: progress.failed,
-          products_created: progress.created,
-          products_updated: progress.updated,
-          completed_at: new Date().toISOString(),
-          current_phase: "Sync completed successfully"
-        }).eq("id", logId);
+        // 3. Process Chunk
+        const chunk = productsToProcess.slice(offset, offset + limit);
+        if (chunk.length === 0) {
+          await supabase.from("sync_logs").update({
+            status: "completed",
+            completed_at: new Date().toISOString(),
+            current_phase: "Sync completed successfully"
+          }).eq("id", logId);
+          await supabase.from("sync_configurations").update({ last_sync_at: new Date().toISOString() }).eq("id", config.id);
+          return;
+        }
 
-        await supabase
-          .from("sync_configurations")
-          .update({ last_sync_at: new Date().toISOString() })
-          .eq("id", config.id);
+        console.log(`[Task ${logId}] Processing chunk ${offset}-${offset + chunk.length} of ${progress.total}`);
+        const openaiApiKey = Deno.env.get("OPENAI_API_KEY") || "";
+
+        for (const product of chunk) {
+          if (await checkCancellation(supabase, logId)) return;
+
+          try {
+            const categoryId = product.category_id_internal;
+            const { data: existing } = await supabase
+              .from("synced_products")
+              .select("id, product_id, last_synced_at")
+              .eq("source_name", "foodnation")
+              .eq("source_id", product.id.toString())
+              .maybeSingle();
+
+            if (existing?.last_synced_at && new Date(existing.last_synced_at) > skipThreshold) {
+              progress.skipped++;
+              progress.current++;
+              await logProductDetail(supabase, logId, product.id.toString(), product.title, "skipped", "Recently synced");
+              continue;
+            }
+
+            await Promise.race([
+              (async () => {
+                const ingredientsRaw = extractIngredients(product.body_html || "");
+                const descriptionRaw = cleanDescription(product.body_html || "");
+                const shortDescriptionRaw = extractFirstTwoSentences(descriptionRaw);
+                const priceRon = parseFloat(product.variants?.[0]?.price || "0");
+                const basePrice = Math.round((priceRon / exchangeRate) * 100) / 100;
+
+                const aiResult = await Promise.race([
+                  cleanAndTranslateWithAI(product.title, shortDescriptionRaw, descriptionRaw, ingredientsRaw, openaiApiKey, aiStats),
+                  new Promise((_, reject) => setTimeout(() => reject(new Error("AI generation timeout")), 60000))
+                ]) as any;
+
+                const productData = {
+                  category_id: categoryId,
+                  title_en: aiResult.title.cleanedEn,
+                  title_ro: aiResult.title.cleanedRo,
+                  short_description_en: aiResult.shortDescription.cleanedEn,
+                  short_description_ro: aiResult.shortDescription.cleanedRo,
+                  full_description_en: aiResult.fullDescription.cleanedEn,
+                  full_description_ro: aiResult.fullDescription.cleanedRo,
+                  ingredients_en: aiResult.ingredients.cleanedEn,
+                  ingredients_ro: aiResult.ingredients.cleanedRo,
+                  base_price: basePrice,
+                  image_url: product.images?.[0]?.src || "",
+                  allergen_info: extractAllergens(product.body_html || ""),
+                  dietary_tags: extractDietaryTags(product.tags || ""),
+                  is_available: product.variants?.some((v: any) => v.available) ?? true,
+                  updated_at: new Date().toISOString(),
+                };
+
+                const slugEn = generateSlug(aiResult.title.cleanedEn);
+                const slugRo = generateSlug(aiResult.title.cleanedRo);
+
+                if (existing) {
+                  const uniqueSlug = await getUniqueSlug(supabase, slugEn, "slug", existing.product_id);
+                  const uniqueSlugRo = await getUniqueSlug(supabase, slugRo, "slug_ro", existing.product_id);
+                  await supabase.from("products").update({ ...productData, slug: uniqueSlug, slug_ro: uniqueSlugRo }).eq("id", existing.product_id);
+                  await supabase.from("synced_products").update({ last_synced_at: new Date().toISOString() }).eq("id", existing.id);
+                  progress.updated++;
+                  await logProductDetail(supabase, logId, product.id.toString(), product.title, "updated");
+                } else {
+                  const uniqueSlug = await getUniqueSlug(supabase, slugEn, "slug");
+                  const uniqueSlugRo = await getUniqueSlug(supabase, slugRo, "slug_ro");
+                  const { data: newP } = await supabase.from("products").insert({ ...productData, slug: uniqueSlug, slug_ro: uniqueSlugRo }).select("id").single();
+                  if (newP) {
+                    await supabase.from("synced_products").insert({ product_id: newP.id, source_id: product.id.toString(), source_name: "foodnation", source_data: product });
+                    progress.created++;
+                    await logProductDetail(supabase, logId, product.id.toString(), product.title, "created");
+                  }
+                }
+                progress.current++;
+              })(),
+              new Promise((_, reject) => setTimeout(() => reject(new Error("Overall product processing timeout")), 90000))
+            ]);
+          } catch (err) {
+            console.error(`Error processing ${product.title}:`, err);
+            progress.failed++;
+            progress.current++;
+            await logProductDetail(supabase, logId, product.id.toString(), product.title, "failed", undefined, String(err));
+          } finally {
+            await updateProgress(supabase, logId, progress, `Processing: ${progress.current}/${progress.total}`);
+          }
+        }
+
+        // 4. Chain Next Call
+        if (progress.current < progress.total) {
+          console.log(`[Task ${logId}] Chaining next chunk from offset ${progress.current}`);
+          const functionUrl = req.url; // Use current request URL
+          await fetch(functionUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": req.headers.get("Authorization") || "",
+            },
+            body: JSON.stringify({
+              log_id: logId,
+              offset: progress.current,
+              limit: limit,
+            }),
+          }).catch(e => console.error("Chaining call failed:", e));
+        } else {
+          await supabase.from("sync_logs").update({
+            status: "completed",
+            completed_at: new Date().toISOString(),
+            current_phase: "Sync completed successfully"
+          }).eq("id", logId);
+          await supabase.from("sync_configurations").update({ last_sync_at: new Date().toISOString() }).eq("id", config.id);
+        }
 
       } catch (err) {
-        console.error("Background sync task failed:", err);
-        await supabase.from("sync_logs").update({
-          status: "failed",
-          error_message: String(err),
-          completed_at: new Date().toISOString()
-        }).eq("id", logId);
+        console.error("Sync task failed:", err);
+        if (logId) {
+          await supabase.from("sync_logs").update({
+            status: "failed",
+            error_message: String(err),
+            completed_at: new Date().toISOString()
+          }).eq("id", logId);
+        }
       }
     };
 
     // Use EdgeRuntime.waitUntil for background execution
-    // @ts-ignore: EdgeRuntime is available in Supabase Edge Functions
+    // @ts-ignore
     EdgeRuntime.waitUntil(runSyncTask());
 
     return new Response(JSON.stringify({ 
       success: true, 
-      message: "Sync started in background", 
-      log_id: logEntry.id 
+      message: existingLogId ? "Sync chunk started" : "Sync started", 
+      log_id: existingLogId || "new_log" // Note: If new, the actual ID is only in DB, but frontend polls
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 202

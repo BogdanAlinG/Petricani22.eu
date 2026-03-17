@@ -143,6 +143,7 @@ export default function ProductSync() {
           table: 'sync_logs',
         },
         (payload) => {
+          console.log('Realtime sync_logs update:', payload.eventType, payload.new);
           if (payload.eventType === 'INSERT') {
             const newLog = payload.new as SyncLog;
             setLogs((prev) => [newLog, ...prev.slice(0, 9)]);
@@ -157,8 +158,9 @@ export default function ProductSync() {
             setLogs((prev) =>
               prev.map((log) => (log.id === updatedLog.id ? updatedLog : log))
             );
-            if (updatedLog.status !== 'running') {
-              if (runningLogIdRef.current === updatedLog.id) {
+            
+            if (updatedLog.id === runningLogIdRef.current) {
+              if (updatedLog.status !== 'running') {
                 setRunningLogId(null);
                 runningLogIdRef.current = null;
                 setSyncing(false);
@@ -168,10 +170,31 @@ export default function ProductSync() {
           }
         }
       )
-      .subscribe();
+      .subscribe((status, err) => {
+        console.log('Realtime sync_logs subscription status:', status, err || '');
+      });
+
+    const detailsChannel = supabase
+      .channel('sync_log_details_realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'sync_log_details',
+        },
+        (payload: any) => {
+          const newDetail = payload.new as SyncLogDetail;
+          setLogDetails((prev) => [newDetail, ...prev]);
+        }
+      )
+      .subscribe((status, err) => {
+        console.log('Realtime sync_log_details subscription status:', status, err || '');
+      });
 
     return () => {
       supabase.removeChannel(channel);
+      supabase.removeChannel(detailsChannel);
     };
   }, []);
 
@@ -193,9 +216,7 @@ export default function ProductSync() {
       const { data: syncData, error: syncInvokeError } = await supabase.functions.invoke(
         'sync-foodnation',
         {
-          headers: {
-            Authorization: `Bearer ${session.access_token}`
-          }
+          body: {}
         }
       );
 
