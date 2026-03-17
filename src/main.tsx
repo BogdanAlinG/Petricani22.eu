@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
 import { CurrencyProvider } from './contexts/CurrencyContext';
 import { ToastProvider } from './components/ui/Toast';
 import { ConfirmProvider } from './components/ui/ConfirmDialog';
@@ -16,6 +17,7 @@ createRoot(document.getElementById('root')!).render(
           <ConfirmProvider>
             <CurrencyProvider>
               <App />
+              <Analytics />
             </CurrencyProvider>
           </ConfirmProvider>
         </ToastProvider>
