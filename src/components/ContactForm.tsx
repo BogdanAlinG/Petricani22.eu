@@ -94,17 +94,11 @@ const ContactForm: React.FC = () => {
     setSubmitStatus('idle');
     setStatusMessage('');
 
-    console.log('Env check:', { 
-      hasUrl: !!import.meta.env.VITE_SUPABASE_URL, 
-      hasKey: !!import.meta.env.VITE_SUPABASE_ANON_KEY 
-    });
-
     try {
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-email`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
