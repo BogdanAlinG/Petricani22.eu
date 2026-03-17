@@ -249,8 +249,8 @@ export default function ItemFormModal({
       {showImageSelector && (
         <ImageSelector
           value={null}
-          onChange={(_id, url) => {
-            if (url) set({ image_url: url });
+          onChange={(items) => {
+            if (items.length > 0) set({ image_url: items[0].url });
             setShowImageSelector(false);
           }}
           onClose={() => setShowImageSelector(false)}

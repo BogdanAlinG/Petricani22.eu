@@ -612,9 +612,9 @@ export default function ProductsManagement() {
       {showImageSelector && (
         <ImageSelector
           value={null}
-          onChange={(_, url) => {
-            if (url) {
-              setForm({ ...form, image_url: url });
+          onChange={(items) => {
+            if (items.length > 0) {
+              setForm({ ...form, image_url: items[0].url });
             }
             setShowImageSelector(false);
           }}

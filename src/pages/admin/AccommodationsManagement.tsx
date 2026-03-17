@@ -291,8 +291,11 @@ export default function AccommodationsManagement() {
       {showImageSelector && (
         <ImageSelector
           value={null}
-          onChange={(_imageId, url) => {
-            setEditing(editing ? { ...editing, thumbnail_url: url } : null);
+          onChange={(items) => {
+            const selected = items[0];
+            if (selected) {
+              setEditing(editing ? { ...editing, thumbnail_url: selected.url } : null);
+            }
           }}
           onClose={() => setShowImageSelector(false)}
           suggestedFolder="accommodations"
@@ -302,24 +305,32 @@ export default function AccommodationsManagement() {
       {showGallerySelector && editing && (
         <ImageSelector
           value={null}
-          onChange={async (_imageId, url) => {
-            if (!url || !editing.id) return;
-            const newDisplayOrder = galleryImages.length > 0
+          multiple={true}
+          onChange={async (items) => {
+            if (items.length === 0 || !editing.id) return;
+            
+            const baseOrder = galleryImages.length > 0
               ? Math.max(...galleryImages.map((g) => g.display_order)) + 1
               : 0;
+
+            const newImages = items.map((item, index) => ({
+              accommodation_id: editing.id,
+              image_url: item.url,
+              alt_text_en: '',
+              alt_text_ro: '',
+              display_order: baseOrder + index,
+            }));
+
             const { data, error } = await supabase
               .from('accommodation_images')
-              .insert({
-                accommodation_id: editing.id,
-                image_url: url,
-                alt_text_en: '',
-                alt_text_ro: '',
-                display_order: newDisplayOrder,
-              })
-              .select()
-              .single();
+              .insert(newImages)
+              .select();
+
             if (!error && data) {
-              setGalleryImages([...galleryImages, data]);
+              setGalleryImages([...galleryImages, ...data]);
+            } else if (error) {
+              console.error('Error inserting gallery images:', error);
+              toast.error('Failed to add some images to the gallery');
             }
           }}
           onClose={() => setShowGallerySelector(false)}

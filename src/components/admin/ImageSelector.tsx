@@ -16,19 +16,19 @@ interface MediaItem {
 
 interface ImageSelectorProps {
   value: string | null;
-  onChange: (imageId: string | null, url: string | null) => void;
+  onChange: (items: { id: string; url: string }[]) => void;
   onClose: () => void;
   suggestedFolder?: string;
+  multiple?: boolean;
 }
 
-export default function ImageSelector({ value, onChange, onClose, suggestedFolder }: ImageSelectorProps) {
+export default function ImageSelector({ value, onChange, onClose, suggestedFolder, multiple = false }: ImageSelectorProps) {
   const toast = useToast();
   const [media, setMedia] = useState<MediaItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedId, setSelectedId] = useState<string | null>(value);
-  const [selectedUrl, setSelectedUrl] = useState<string | null>(null);
+  const [selectedItems, setSelectedItems] = useState<{ id: string; url: string }[]>([]);
   const [folderFilter, setFolderFilter] = useState<string>(suggestedFolder || 'all');
   const [folders, setFolders] = useState<string[]>([]);
 
@@ -48,15 +48,15 @@ export default function ImageSelector({ value, onChange, onClose, suggestedFolde
       setMedia(data || []);
 
       const existingFolders = (data || [])
-        .map((item) => item.folder)
-        .filter((f): f is string => f !== null);
-      setFolders([...new Set(existingFolders)]);
+        .map((item: MediaItem) => item.folder)
+        .filter((f: string | null): f is string => f !== null);
+      setFolders([...new Set(existingFolders)] as string[]);
 
       if (value) {
-        const selected = data?.find((m) => m.id === value);
-        if (selected) {
-          setSelectedUrl(selected.url);
-        }
+        const initialSelected = (data || [])
+          .filter((m: MediaItem) => value.split(',').includes(m.id))
+          .map((m: MediaItem) => ({ id: m.id, url: m.url }));
+        setSelectedItems(initialSelected);
       }
     } catch (error) {
       console.error('Error fetching media:', error);
@@ -97,8 +97,12 @@ export default function ImageSelector({ value, onChange, onClose, suggestedFolde
       if (insertError) throw insertError;
 
       setMedia([mediaData, ...media]);
-      setSelectedId(mediaData.id);
-      setSelectedUrl(mediaData.url);
+      const newItem = { id: mediaData.id, url: mediaData.url };
+      if (multiple) {
+        setSelectedItems([...selectedItems, newItem]);
+      } else {
+        setSelectedItems([newItem]);
+      }
     } catch (error) {
       console.error('Error uploading file:', error);
       toast.error('Failed to upload image. Please try again.');
@@ -108,12 +112,20 @@ export default function ImageSelector({ value, onChange, onClose, suggestedFolde
   };
 
   const handleSelect = (item: MediaItem) => {
-    setSelectedId(item.id);
-    setSelectedUrl(item.url);
+    if (multiple) {
+      const isSelected = selectedItems.some((i) => i.id === item.id);
+      if (isSelected) {
+        setSelectedItems(selectedItems.filter((i) => i.id !== item.id));
+      } else {
+        setSelectedItems([...selectedItems, { id: item.id, url: item.url }]);
+      }
+    } else {
+      setSelectedItems([{ id: item.id, url: item.url }]);
+    }
   };
 
   const handleConfirm = () => {
-    onChange(selectedId, selectedUrl);
+    onChange(selectedItems);
     onClose();
   };
 
@@ -232,44 +244,51 @@ export default function ImageSelector({ value, onChange, onClose, suggestedFolde
             </div>
           ) : (
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
-              {filteredMedia.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => handleSelect(item)}
-                  className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-all ${
-                    selectedId === item.id
-                      ? 'border-primary ring-2 ring-primary ring-offset-2'
-                      : 'border-transparent hover:border-gray-300'
-                  }`}
-                >
-                  <img
-                    src={item.url}
-                    alt={item.alt_text_en || item.filename}
-                    className="w-full h-full object-cover"
-                  />
-                  {selectedId === item.id && (
-                    <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
-                      <div className="bg-primary text-white rounded-full p-1">
-                        <Check className="w-4 h-4" />
+              {filteredMedia.map((item) => {
+                const isSelected = selectedItems.some((i) => i.id === item.id);
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => handleSelect(item)}
+                    className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-all ${
+                      isSelected
+                        ? 'border-primary ring-2 ring-primary ring-offset-2'
+                        : 'border-transparent hover:border-gray-300'
+                    }`}
+                  >
+                    <img
+                      src={item.url}
+                      alt={item.alt_text_en || item.filename}
+                      className="w-full h-full object-cover"
+                    />
+                    {isSelected && (
+                      <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
+                        <div className="bg-primary text-white rounded-full p-1">
+                          <Check className="w-4 h-4" />
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </button>
-              ))}
+                    )}
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>
 
         <div className="flex items-center justify-between p-4 border-t bg-gray-50">
-          <button
-            onClick={() => {
-              setSelectedId(null);
-              setSelectedUrl(null);
-            }}
-            className="px-4 py-2 text-gray-600 hover:bg-gray-200 rounded-lg transition-colors"
-          >
-            Clear Selection
-          </button>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setSelectedItems([])}
+              className="px-4 py-2 text-gray-600 hover:bg-gray-200 rounded-lg transition-colors"
+            >
+              Clear Selection
+            </button>
+            {selectedItems.length > 0 && (
+              <span className="text-sm font-medium text-primary">
+                {selectedItems.length} {selectedItems.length === 1 ? 'item' : 'items'} selected
+              </span>
+            )}
+          </div>
           <div className="flex gap-3">
             <button
               onClick={onClose}
@@ -279,9 +298,10 @@ export default function ImageSelector({ value, onChange, onClose, suggestedFolde
             </button>
             <button
               onClick={handleConfirm}
-              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors"
+              disabled={selectedItems.length === 0}
+              className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors disabled:opacity-50"
             >
-              Select Image
+              {multiple ? `Select ${selectedItems.length} ${selectedItems.length === 1 ? 'Image' : 'Images'}` : 'Select Image'}
             </button>
           </div>
         </div>

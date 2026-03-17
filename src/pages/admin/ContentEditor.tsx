@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Plus,
   Trash2,
@@ -92,12 +92,7 @@ export default function ContentEditor() {
   const [newSectionType, setNewSectionType] = useState('custom');
   const [mediaCache, setMediaCache] = useState<Record<string, MediaItem>>({});
 
-  useEffect(() => {
-    fetchSections();
-    fetchBlocks();
-  }, [selectedPage]);
-
-  const fetchSections = async () => {
+  const fetchSections = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('page_sections')
@@ -108,13 +103,18 @@ export default function ContentEditor() {
       if (error) throw error;
       setSections(data || []);
 
-      const imageIds = data?.filter((s) => s.image_id).map((s) => s.image_id) || [];
+      const imageIds = data?.filter((s: PageSection) => s.image_id).map((s: PageSection) => s.image_id as string) || [];
       if (imageIds.length > 0) {
-        const { data: mediaData } = await supabase.from('media_library').select('id, url, filename').in('id', imageIds);
+        const { data: mediaData } = await supabase
+          .from('media_library')
+          .select('id, url, filename')
+          .in('id', imageIds);
         if (mediaData) {
-          const cache: Record<string, MediaItem> = {};
-          mediaData.forEach((m) => { cache[m.id] = m; });
-          setMediaCache((prev) => ({ ...prev, ...cache }));
+          const cache: Record<string, MediaItem> = { ...mediaCache };
+          mediaData.forEach((m: MediaItem) => {
+            cache[m.id] = m;
+          });
+          setMediaCache(cache);
         }
       }
     } catch (error) {
@@ -122,9 +122,9 @@ export default function ContentEditor() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedPage, setSections, setLoading, setMediaCache, mediaCache]);
 
-  const fetchBlocks = async () => {
+  const fetchBlocks = useCallback(async () => {
     try {
       const { data: sectionsData } = await supabase.from('page_sections').select('id').eq('page', selectedPage);
       if (!sectionsData || sectionsData.length === 0) { setBlocks([]); return; }
@@ -134,19 +134,29 @@ export default function ContentEditor() {
       if (error) throw error;
       setBlocks(data || []);
 
-      const imageIds = data?.filter((b) => b.image_id).map((b) => b.image_id) || [];
+      const imageIds = data?.filter((b: ContentBlock) => b.image_id).map((b: ContentBlock) => b.image_id as string) || [];
       if (imageIds.length > 0) {
-        const { data: mediaData } = await supabase.from('media_library').select('id, url, filename').in('id', imageIds);
+        const { data: mediaData } = await supabase
+          .from('media_library')
+          .select('id, url, filename')
+          .in('id', imageIds);
         if (mediaData) {
-          const cache: Record<string, MediaItem> = {};
-          mediaData.forEach((m) => { cache[m.id] = m; });
-          setMediaCache((prev) => ({ ...prev, ...cache }));
+          const cache: Record<string, MediaItem> = { ...mediaCache };
+          mediaData.forEach((m: MediaItem) => {
+            cache[m.id] = m;
+          });
+          setMediaCache(cache);
         }
       }
     } catch (error) {
       console.error('Error fetching blocks:', error);
     }
-  };
+  }, [selectedPage, setBlocks, setMediaCache, mediaCache]);
+
+  useEffect(() => {
+    fetchSections();
+    fetchBlocks();
+  }, [selectedPage, fetchSections, fetchBlocks]);
 
   const handleCreateSection = async () => {
     try {
@@ -307,15 +317,27 @@ export default function ContentEditor() {
     }
   };
 
-  const handleImageSelect = (imageId: string | null, url: string | null) => {
+  const handleImageSelect = (items: { id: string; url: string }[]) => {
+    if (items.length === 0) {
+      if (imageSelectTarget === 'section' && editingSection) {
+        setEditingSection({ ...editingSection, image_id: null });
+      } else if (imageSelectTarget === 'block' && editingBlock) {
+        setEditingBlock({ ...editingBlock, image_id: null });
+      }
+      setShowImageSelector(false);
+      return;
+    }
+
+    const { id: imageId, url } = items[0];
+
     if (imageSelectTarget === 'section' && editingSection) {
       setEditingSection({ ...editingSection, image_id: imageId });
     } else if (imageSelectTarget === 'block' && editingBlock) {
       setEditingBlock({ ...editingBlock, image_id: imageId });
     }
-    if (imageId && url) {
-      setMediaCache((prev) => ({ ...prev, [imageId]: { id: imageId, url, filename: '' } }));
-    }
+    
+    setMediaCache((prev) => ({ ...prev, [imageId]: { id: imageId, url, filename: '' } }));
+    setShowImageSelector(false);
   };
 
   const getSectionBlocks = (sectionId: string) =>

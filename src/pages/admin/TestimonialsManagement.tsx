@@ -229,19 +229,29 @@ export default function TestimonialsManagement() {
     }
   };
 
-  const handleImageSelect = (imageId: string | null, url: string | null) => {
+  const handleImageSelect = (items: { id: string; url: string }[]) => {
+    if (items.length === 0) {
+      if (showAddModal) {
+        setNewTestimonial({ ...newTestimonial, author_image_id: null });
+      } else if (editingTestimonial) {
+        setEditingTestimonial({ ...editingTestimonial, author_image_id: null });
+      }
+      setShowImageSelector(false);
+      return;
+    }
+
+    const { id: imageId, url } = items[0];
+
     if (showAddModal) {
       setNewTestimonial({ ...newTestimonial, author_image_id: imageId });
     } else if (editingTestimonial) {
       setEditingTestimonial({ ...editingTestimonial, author_image_id: imageId });
     }
 
-    if (imageId && url) {
-      setMediaCache((prev) => ({
-        ...prev,
-        [imageId]: { id: imageId, url, filename: '' },
-      }));
-    }
+    setMediaCache((prev) => ({
+      ...prev,
+      [imageId]: { id: imageId, url, filename: '' },
+    }));
     setShowImageSelector(false);
   };
 

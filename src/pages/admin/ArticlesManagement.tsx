@@ -8,10 +8,9 @@ import {
   Eye,
   EyeOff,
   Star,
-  Calendar,
   Clock,
-  Tag,
   BookOpen,
+  Image as ImageIcon,
   Search,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
@@ -95,7 +94,7 @@ export default function ArticlesManagement() {
       if (error) throw error;
       setArticles(data || []);
 
-      const imageIds = data?.filter((a) => a.featured_image_id).map((a) => a.featured_image_id) || [];
+      const imageIds = data?.filter((a: Article) => a.featured_image_id).map((a: Article) => a.featured_image_id as string) || [];
       if (imageIds.length > 0) {
         const { data: mediaData } = await supabase
           .from('media_library')
@@ -104,7 +103,7 @@ export default function ArticlesManagement() {
 
         if (mediaData) {
           const cache: Record<string, MediaItem> = {};
-          mediaData.forEach((m) => {
+          mediaData.forEach((m: MediaItem) => {
             cache[m.id] = m;
           });
           setMediaCache(cache);
@@ -117,14 +116,6 @@ export default function ArticlesManagement() {
     }
   };
 
-  const generateSlug = (title: string) => {
-    return title
-      .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-')
-      .trim();
-  };
 
   const handleAddArticle = async () => {
     if (!newArticle.id.trim() || !newArticle.title_ro.trim() || !newArticle.title_en.trim()) {
@@ -266,7 +257,10 @@ export default function ArticlesManagement() {
     }
   };
 
-  const handleImageSelect = (imageId: string, imageUrl: string) => {
+  const handleImageSelect = (items: { id: string; url: string }[]) => {
+    if (items.length === 0) return;
+    const { id: imageId, url: imageUrl } = items[0];
+
     if (editingArticle) {
       setEditingArticle({ ...editingArticle, featured_image_id: imageId });
       setMediaCache({ ...mediaCache, [imageId]: { id: imageId, url: imageUrl, filename: '' } });
@@ -361,8 +355,8 @@ export default function ArticlesManagement() {
     const sourceLang = targetLang === 'en' ? 'ro' : 'en';
     const sourceKey = `${field}_${sourceLang}` as keyof typeof newArticle;
     const sourceValue = isEditing
-      ? (editingArticle as Record<string, string>)?.[`${field}_${sourceLang}`]
-      : (newArticle as Record<string, string>)[`${field}_${sourceLang}`];
+      ? (editingArticle as unknown as Record<string, string | boolean | string[]>)?.[`${field}_${sourceLang}`] as string
+      : (newArticle as unknown as Record<string, string | boolean | string[]>)[`${field}_${sourceLang}`] as string;
 
     if (!sourceValue?.trim()) {
       toast.warning(`No ${sourceLang.toUpperCase()} content to translate from.`);
@@ -490,7 +484,7 @@ export default function ArticlesManagement() {
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
-                  <BookOpen className="w-12 h-12 text-gray-300" />
+                  <ImageIcon className="w-12 h-12 text-gray-300" />
                 </div>
               )}
               <div className="absolute top-2 right-2 flex gap-2">
@@ -1053,10 +1047,7 @@ export default function ArticlesManagement() {
       {showImageSelector && (
         <ImageSelector
           value={editingArticle?.featured_image_id ?? newArticle.featured_image_id}
-          onChange={(imageId, imageUrl) => {
-            if (imageId && imageUrl) handleImageSelect(imageId, imageUrl);
-            setShowImageSelector(false);
-          }}
+          onChange={handleImageSelect}
           onClose={() => setShowImageSelector(false)}
         />
       )}
