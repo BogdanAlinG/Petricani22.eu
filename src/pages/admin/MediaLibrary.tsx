@@ -13,7 +13,6 @@ import {
   FileVideo,
   FileText,
   Plus,
-  LayoutTemplate,
   Images,
   ShoppingBag,
   FileImage,
@@ -49,7 +48,7 @@ interface UsageLocation {
 }
 
 const USAGE_LOCATIONS: UsageLocation[] = [
-  { id: 'hero', label: 'Hero Section', icon: <LayoutTemplate className="w-5 h-5" />, description: 'Main banner images' },
+  { id: 'hero', label: 'Hero Section', icon: <ImageIcon className="w-5 h-5" />, description: 'Main banner images' },
   { id: 'gallery', label: 'Photo Gallery', icon: <Images className="w-5 h-5" />, description: 'Gallery slideshows' },
   { id: 'products', label: 'Products', icon: <ShoppingBag className="w-5 h-5" />, description: 'Menu item photos' },
   { id: 'thumbnails', label: 'Thumbnails', icon: <FileImage className="w-5 h-5" />, description: 'Preview images' },
@@ -95,11 +94,11 @@ export default function MediaLibrary() {
       setAllMedia(data || []);
 
       const existingFolders = (data || [])
-        .map((item) => item.folder)
-        .filter((f): f is string => f !== null);
-      const defaultIds = USAGE_LOCATIONS.map(l => l.id);
-      const custom = existingFolders.filter(f => !defaultIds.includes(f.toLowerCase()));
-      setCustomLocations([...new Set(custom)]);
+        .map((item: any) => item?.folder)
+        .filter((f: any): f is string => typeof f === 'string');
+      const defaultIds = USAGE_LOCATIONS.map(l => l.id.toLowerCase());
+      const custom = existingFolders.filter((f: string) => f && !defaultIds.includes(f.toLowerCase()));
+      setCustomLocations([...new Set(custom)] as string[]);
     } catch (error) {
       console.error('Error fetching media:', error);
     } finally {
@@ -107,7 +106,8 @@ export default function MediaLibrary() {
     }
   };
 
-  const media = allMedia.filter(item => {
+  const media = (allMedia || []).filter(item => {
+    if (!item) return false;
     if (typeFilter !== 'all' && item.type !== typeFilter) return false;
     if (selectedLocation === 'uncategorized') return !item.folder;
     if (selectedLocation) return item.folder?.toLowerCase() === selectedLocation.toLowerCase();
@@ -226,9 +226,9 @@ export default function MediaLibrary() {
 
   const getLocationCount = (locationId: string | null) => {
     if (!locationId) {
-      return allMedia.filter(m => !m.folder).length;
+      return (allMedia || []).filter(m => !m?.folder).length;
     }
-    return allMedia.filter(m => m.folder?.toLowerCase() === locationId.toLowerCase()).length;
+    return (allMedia || []).filter(m => m?.folder?.toLowerCase() === locationId.toLowerCase()).length;
   };
 
   const allLocations = [
@@ -259,11 +259,11 @@ export default function MediaLibrary() {
     }
   };
 
-  const filteredMedia = media.filter(
+  const filteredMedia = (media || []).filter(
     (item) =>
-      item.filename.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.alt_text_en?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.alt_text_ro?.toLowerCase().includes(searchQuery.toLowerCase())
+      item?.filename?.toLowerCase()?.includes(searchQuery.toLowerCase()) ||
+      item?.alt_text_en?.toLowerCase()?.includes(searchQuery.toLowerCase()) ||
+      item?.alt_text_ro?.toLowerCase()?.includes(searchQuery.toLowerCase())
   );
 
   return (
