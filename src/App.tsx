@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
 import { CartProvider } from './contexts/CartContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { QuoteProvider } from './contexts/QuoteContext';
@@ -64,6 +65,7 @@ function App() {
           <QuoteProvider>
             <SlugProvider>
               <NavigationProvider>
+                <Analytics />
                 <Routes>
                   <Route path="/" element={<LanguageRedirect />} />
 
