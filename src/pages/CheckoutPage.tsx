@@ -117,6 +117,27 @@ export default function CheckoutPage() {
     }
   };
 
+  const handleInvalid = (e: React.FormEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const target = e.target as HTMLInputElement;
+    if (language === 'RO') {
+      if (target.validity.valueMissing) {
+        target.setCustomValidity('Vă rugăm să completați acest câmp.');
+      } else if (target.type === 'email' && target.validity.typeMismatch) {
+        target.setCustomValidity('Vă rugăm să introduceți o adresă de email validă.');
+      } else if (target.type === 'email' && target.validity.valueMissing === false) {
+        target.setCustomValidity('Vă rugăm să includeți un "@" în adresa de email.');
+      } else {
+        target.setCustomValidity('');
+      }
+    } else {
+      target.setCustomValidity('');
+    }
+  };
+
+  const handleInput = (e: React.FormEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    (e.target as HTMLInputElement).setCustomValidity('');
+  };
+
   const content = {
     RO: {
       title: 'Finalizare Comanda',
@@ -190,12 +211,10 @@ export default function CheckoutPage() {
                   required
                   value={formData.guestName}
                   onChange={(e) => {
-                    e.target.setCustomValidity('');
                     setFormData({ ...formData, guestName: e.target.value });
                   }}
-                  onInvalid={(e) => {
-                    (e.target as HTMLInputElement).setCustomValidity(t.requiredField);
-                  }}
+                  onInvalid={handleInvalid}
+                  onInput={handleInput}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent invalid:border-primary-light invalid:focus:ring-primary-light"
                 />
               </div>
@@ -208,12 +227,10 @@ export default function CheckoutPage() {
                   required
                   value={formData.guestPhone}
                   onChange={(e) => {
-                    e.target.setCustomValidity('');
                     setFormData({ ...formData, guestPhone: e.target.value });
                   }}
-                  onInvalid={(e) => {
-                    (e.target as HTMLInputElement).setCustomValidity(t.requiredField);
-                  }}
+                  onInvalid={handleInvalid}
+                  onInput={handleInput}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent invalid:border-primary-light invalid:focus:ring-primary-light"
                 />
               </div>
@@ -226,17 +243,10 @@ export default function CheckoutPage() {
                   required
                   value={formData.guestEmail}
                   onChange={(e) => {
-                    e.target.setCustomValidity('');
                     setFormData({ ...formData, guestEmail: e.target.value });
                   }}
-                  onInvalid={(e) => {
-                    const input = e.target as HTMLInputElement;
-                    if (input.validity.valueMissing) {
-                      input.setCustomValidity(t.requiredField);
-                    } else if (input.validity.typeMismatch) {
-                      input.setCustomValidity(t.invalidEmail);
-                    }
-                  }}
+                  onInvalid={handleInvalid}
+                  onInput={handleInput}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent invalid:border-primary-light invalid:focus:ring-primary-light"
                 />
               </div>
@@ -249,12 +259,10 @@ export default function CheckoutPage() {
                   required
                   value={formData.roomNumber}
                   onChange={(e) => {
-                    e.target.setCustomValidity('');
                     setFormData({ ...formData, roomNumber: e.target.value });
                   }}
-                  onInvalid={(e) => {
-                    (e.target as HTMLInputElement).setCustomValidity(t.requiredField);
-                  }}
+                  onInvalid={handleInvalid}
+                  onInput={handleInput}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent invalid:border-primary-light invalid:focus:ring-primary-light"
                 />
               </div>
@@ -267,12 +275,10 @@ export default function CheckoutPage() {
                   required
                   value={formData.checkInDate}
                   onChange={(e) => {
-                    e.target.setCustomValidity('');
                     setFormData({ ...formData, checkInDate: e.target.value });
                   }}
-                  onInvalid={(e) => {
-                    (e.target as HTMLInputElement).setCustomValidity(t.requiredField);
-                  }}
+                  onInvalid={handleInvalid}
+                  onInput={handleInput}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent invalid:border-primary-light invalid:focus:ring-primary-light"
                 />
               </div>
@@ -292,12 +298,10 @@ export default function CheckoutPage() {
                   required
                   value={formData.deliveryDate}
                   onChange={(e) => {
-                    e.target.setCustomValidity('');
                     setFormData({ ...formData, deliveryDate: e.target.value });
                   }}
-                  onInvalid={(e) => {
-                    (e.target as HTMLInputElement).setCustomValidity(t.requiredField);
-                  }}
+                  onInvalid={handleInvalid}
+                  onInput={handleInput}
                   min={new Date(Date.now() + 86400000).toISOString().split('T')[0]}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent invalid:border-primary-light invalid:focus:ring-primary-light"
                 />

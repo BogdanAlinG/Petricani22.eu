@@ -127,6 +127,28 @@ const ContactForm: React.FC = () => {
     }
   };
 
+  const handleInvalid = (e: React.FormEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const target = e.target as HTMLInputElement;
+    if (lang === 'RO') {
+      if (target.validity.valueMissing) {
+        target.setCustomValidity('Acest câmp este obligatoriu.');
+      } else if (target.type === 'email' && target.validity.typeMismatch) {
+        target.setCustomValidity('Vă rugăm să introduceți o adresă de email validă.');
+      } else if (target.type === 'email' && target.validity.valueMissing === false) {
+          // If it's not missing but mismatch (missing @)
+          target.setCustomValidity('Vă rugăm să includeți un "@" în adresa de email.');
+      } else {
+        target.setCustomValidity('');
+      }
+    } else {
+      target.setCustomValidity('');
+    }
+  };
+
+  const handleInput = (e: React.FormEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    (e.target as HTMLInputElement).setCustomValidity('');
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     setFormData(prev => ({
@@ -153,30 +175,30 @@ const ContactForm: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">{labelName}</label>
-                  <input type="text" name="name" value={formData.name} onChange={handleChange} required className="w-full px-4 py-3 min-h-[48px] rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-transparent transition-colors text-base" />
+                  <input type="text" name="name" value={formData.name} onChange={handleChange} onInvalid={handleInvalid} onInput={handleInput} required className="w-full px-4 py-3 min-h-[48px] rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-transparent transition-colors text-base" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">{labelPhone}</label>
-                  <input type="tel" name="phone" value={formData.phone} onChange={handleChange} required className="w-full px-4 py-3 min-h-[48px] rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-transparent transition-colors text-base" />
+                  <input type="tel" name="phone" value={formData.phone} onChange={handleChange} onInvalid={handleInvalid} onInput={handleInput} required className="w-full px-4 py-3 min-h-[48px] rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-transparent transition-colors text-base" />
                 </div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">{labelEmail}</label>
-                <input type="email" name="email" value={formData.email} onChange={handleChange} required className="w-full px-4 py-3 min-h-[48px] rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-transparent transition-colors text-base" />
+                <input type="email" name="email" value={formData.email} onChange={handleChange} onInvalid={handleInvalid} onInput={handleInput} required className="w-full px-4 py-3 min-h-[48px] rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-transparent transition-colors text-base" />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">{labelPeriod}</label>
-                  <select name="rentalPeriod" value={formData.rentalPeriod} onChange={handleChange} required className="w-full px-4 py-3 min-h-[48px] rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-transparent transition-colors text-base bg-white">
+                  <select name="rentalPeriod" value={formData.rentalPeriod} onChange={handleChange} onInvalid={handleInvalid} onInput={handleInput} required className="w-full px-4 py-3 min-h-[48px] rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-transparent transition-colors text-base bg-white">
                     <option value="">...</option>
                     {periods.map((p, i) => <option key={i} value={p}>{p}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">{labelConfig}</label>
-                  <select name="configuration" value={formData.configuration} onChange={handleChange} required className="w-full px-4 py-3 min-h-[48px] rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-transparent transition-colors text-base bg-white">
+                  <select name="configuration" value={formData.configuration} onChange={handleChange} onInvalid={handleInvalid} onInput={handleInput} required className="w-full px-4 py-3 min-h-[48px] rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-transparent transition-colors text-base bg-white">
                     <option value="">...</option>
                     {configurations.map((c, i) => <option key={i} value={c}>{c}</option>)}
                   </select>
@@ -189,7 +211,7 @@ const ContactForm: React.FC = () => {
               </div>
 
               <div className="flex items-start gap-3">
-                <input type="checkbox" name="gdprConsent" checked={formData.gdprConsent} onChange={handleChange} required className="mt-0.5 w-6 h-6 min-w-[24px] text-primary border-gray-300 rounded focus:ring-primary cursor-pointer" />
+                <input type="checkbox" name="gdprConsent" checked={formData.gdprConsent} onChange={handleChange} onInvalid={handleInvalid} onInput={handleInput} required className="mt-0.5 w-6 h-6 min-w-[24px] text-primary border-gray-300 rounded focus:ring-primary cursor-pointer" />
                 <label className="text-sm text-gray-700 leading-relaxed">{gdprText}</label>
               </div>
 

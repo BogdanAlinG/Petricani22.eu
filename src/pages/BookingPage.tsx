@@ -170,6 +170,27 @@ export default function BookingPage() {
     });
   };
 
+  const handleInvalid = (e: React.FormEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const target = e.target as HTMLInputElement;
+    if (language === 'RO') {
+      if (target.validity.valueMissing) {
+        target.setCustomValidity('Acest câmp este obligatoriu.');
+      } else if (target.type === 'email' && target.validity.typeMismatch) {
+        target.setCustomValidity('Vă rugăm să introduceți o adresă de email validă.');
+      } else if (target.type === 'email' && target.validity.valueMissing === false) {
+        target.setCustomValidity('Vă rugăm să includeți un "@" în adresa de email.');
+      } else {
+        target.setCustomValidity('');
+      }
+    } else {
+      target.setCustomValidity('');
+    }
+  };
+
+  const handleInput = (e: React.FormEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    (e.target as HTMLInputElement).setCustomValidity('');
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -316,6 +337,8 @@ export default function BookingPage() {
                       required
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      onInvalid={handleInvalid}
+                      onInput={handleInput}
                       className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
                     />
                   </div>
@@ -330,6 +353,8 @@ export default function BookingPage() {
                         required
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        onInvalid={handleInvalid}
+                        onInput={handleInput}
                         className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
                       />
                     </div>

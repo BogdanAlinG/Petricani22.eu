@@ -2,6 +2,7 @@ import { useState, FormEvent } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Lock, Mail, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 export default function AdminLogin() {
   const [email, setEmail] = useState('');
@@ -10,6 +11,7 @@ export default function AdminLogin() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { signIn } = useAuth();
+  const { language } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -30,6 +32,27 @@ export default function AdminLogin() {
 
     navigate(from, { replace: true });
   }
+
+  const handleInvalid = (e: React.FormEvent<HTMLInputElement>) => {
+    const target = e.target as HTMLInputElement;
+    if (language === 'RO') {
+      if (target.validity.valueMissing) {
+        target.setCustomValidity('Acest câmp este obligatoriu.');
+      } else if (target.type === 'email' && target.validity.typeMismatch) {
+        target.setCustomValidity('Vă rugăm să introduceți o adresă de email validă.');
+      } else if (target.type === 'email' && target.validity.valueMissing === false) {
+        target.setCustomValidity('Vă rugăm să includeți un "@" în adresa de email.');
+      } else {
+        target.setCustomValidity('');
+      }
+    } else {
+      target.setCustomValidity('');
+    }
+  };
+
+  const handleInput = (e: React.FormEvent<HTMLInputElement>) => {
+    (e.target as HTMLInputElement).setCustomValidity('');
+  };
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
@@ -61,6 +84,8 @@ export default function AdminLogin() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  onInvalid={handleInvalid}
+                  onInput={handleInput}
                   required
                   autoComplete="email"
                   className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
