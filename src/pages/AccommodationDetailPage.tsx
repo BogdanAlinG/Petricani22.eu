@@ -14,6 +14,7 @@ import {
   Heart,
   Loader,
   ExternalLink,
+  X,
 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
@@ -71,14 +72,18 @@ type SlideDirection = 'left' | 'right' | null;
 function ImageGallery({
   images,
   thumbnailUrl,
+  language,
 }: {
   images: { image_url: string; alt_text_en: string; alt_text_ro: string }[];
   thumbnailUrl: string | null;
+  language: 'EN' | 'RO';
 }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [prevIndex, setPrevIndex] = useState<number | null>(null);
   const [direction, setDirection] = useState<SlideDirection>(null);
   const [animating, setAnimating] = useState(false);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
   const animationTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -133,6 +138,36 @@ function ImageGallery({
     navigate(idx, idx > currentIndex ? 'left' : 'right');
   };
 
+  const openLightbox = (idx: number) => {
+    setLightboxIndex(idx);
+    setIsLightboxOpen(true);
+    document.body.style.overflow = 'hidden';
+  };
+
+  const closeLightbox = () => {
+    setIsLightboxOpen(false);
+    document.body.style.overflow = 'unset';
+  };
+
+  const nextLightbox = () => {
+    setLightboxIndex((prev) => (prev === allImages.length - 1 ? 0 : prev + 1));
+  };
+
+  const prevLightbox = () => {
+    setLightboxIndex((prev) => (prev === 0 ? allImages.length - 1 : prev - 1));
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!isLightboxOpen) return;
+      if (e.key === 'Escape') closeLightbox();
+      if (e.key === 'ArrowRight') nextLightbox();
+      if (e.key === 'ArrowLeft') prevLightbox();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isLightboxOpen, allImages.length]);
+
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
     touchStartY.current = e.touches[0].clientY;
@@ -143,7 +178,13 @@ function ImageGallery({
     const dx = e.changedTouches[0].clientX - touchStartX.current;
     const dy = e.changedTouches[0].clientY - touchStartY.current;
     if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40) {
-      dx < 0 ? goToNext() : goToPrev();
+      if (isLightboxOpen) {
+        if (dx < 0) nextLightbox();
+        else prevLightbox();
+      } else {
+        if (dx < 0) goToNext();
+        else goToPrev();
+      }
     }
     touchStartX.current = null;
     touchStartY.current = null;
@@ -185,7 +226,8 @@ function ImageGallery({
           src={allImages[currentIndex].image_url}
           alt=""
           style={animating ? getIncomingStyle(direction) : {}}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover cursor-zoom-in"
+          onClick={() => openLightbox(currentIndex)}
         />
 
         {allImages.length > 1 && (
@@ -256,12 +298,82 @@ function ImageGallery({
           </button>
         </div>
       )}
+
+      {/* Lightbox Modal */}
+      {isLightboxOpen && (
+        <div 
+          className="fixed inset-0 z-[100] bg-black/95 flex flex-col backdrop-blur-sm"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between p-4 md:p-6">
+            <div className="text-white font-medium">
+              {lightboxIndex + 1} / {allImages.length}
+            </div>
+            <button
+              onClick={closeLightbox}
+              className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-all"
+            >
+              <X className="w-8 h-8" />
+            </button>
+          </div>
+
+          {/* Main Image View */}
+          <div className="flex-1 relative flex items-center justify-center p-4 md:p-12 overflow-hidden">
+            <button
+              onClick={prevLightbox}
+              className="absolute left-4 md:left-8 w-12 h-12 md:w-16 md:h-16 flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 rounded-full transition-all z-10"
+            >
+              <ChevronLeft className="w-8 h-8 md:w-10 md:h-10" />
+            </button>
+
+            <div className="relative w-full h-full flex items-center justify-center">
+              <img
+                src={allImages[lightboxIndex].image_url}
+                alt={language === 'EN' ? allImages[lightboxIndex].alt_text_en : allImages[lightboxIndex].alt_text_ro}
+                className="max-w-full max-h-full object-contain select-none animate-in zoom-in-95 duration-300"
+              />
+            </div>
+
+            <button
+              onClick={nextLightbox}
+              className="absolute right-4 md:right-8 w-12 h-12 md:w-16 md:h-16 flex items-center justify-center text-white/50 hover:text-white hover:bg-white/10 rounded-full transition-all z-10"
+            >
+              <ChevronRight className="w-8 h-8 md:w-10 md:h-10" />
+            </button>
+          </div>
+
+          {/* Thumbnails Strip */}
+          <div className="p-4 md:p-8 overflow-x-auto">
+            <div className="flex justify-center gap-2 min-w-max mx-auto">
+              {allImages.map((img, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setLightboxIndex(idx)}
+                  className={`relative w-16 h-12 md:w-24 md:h-16 rounded overflow-hidden transition-all duration-300 ${
+                    idx === lightboxIndex
+                      ? 'ring-2 ring-white scale-110 z-10'
+                      : 'opacity-40 hover:opacity-100 scale-100'
+                  }`}
+                >
+                  <img
+                    src={img.image_url}
+                    alt=""
+                    className="w-full h-full object-cover"
+                  />
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 function AmenityIcon({ iconName }: { iconName: string }) {
-  const Icon = (LucideIcons as any)[iconName] || LucideIcons.Check;
+  const Icon = (LucideIcons as unknown as Record<string, React.ComponentType<{ className?: string }>>)[iconName] || LucideIcons.Check;
   return <Icon className="w-5 h-5" />;
 }
 
@@ -367,7 +479,7 @@ export default function AccommodationDetailPage() {
       </div>
 
       <div id="gallery">
-        <ImageGallery images={images} thumbnailUrl={accommodation.thumbnail_url} />
+        <ImageGallery images={images} thumbnailUrl={accommodation.thumbnail_url} language={language} />
       </div>
 
       <div className="container mx-auto px-4 pb-6">
