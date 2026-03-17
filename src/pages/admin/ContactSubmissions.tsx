@@ -2,14 +2,12 @@ import { useEffect, useState } from 'react';
 import {
   Mail,
   Phone,
-  User,
   Calendar,
   MessageSquare,
-  Check,
   Clock,
   CheckCircle,
-  ChevronDown,
   X,
+  Trash2,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 
@@ -62,6 +60,24 @@ export default function ContactSubmissions() {
     if (selectedContact?.id === id) {
       setSelectedContact({ ...selectedContact, status });
     }
+  }
+
+  async function deleteContact(id: string) {
+    if (!window.confirm('Are you sure you want to delete this submission? This action cannot be undone.')) {
+      return;
+    }
+
+    const { error } = await supabase.from('contact_submissions').delete().eq('id', id);
+    
+    if (error) {
+      alert('Error deleting submission: ' + error.message);
+      return;
+    }
+
+    if (selectedContact?.id === id) {
+      setSelectedContact(null);
+    }
+    fetchContacts();
   }
 
   const getStatusColor = (status: string) => {
@@ -313,6 +329,13 @@ export default function ContactSubmissions() {
                       Reset to Pending
                     </button>
                   )}
+                  <button
+                    onClick={() => deleteContact(selectedContact.id)}
+                    className="px-4 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors flex items-center gap-2 ml-auto"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Delete Submission
+                  </button>
                 </div>
               </div>
             </div>
