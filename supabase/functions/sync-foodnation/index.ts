@@ -694,6 +694,12 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
+    console.log("Request received:", {
+      method: req.method,
+      url: req.url,
+      headers: Object.fromEntries(req.headers.entries()),
+    });
+
     const openaiApiKey = Deno.env.get("OPENAI_API_KEY");
     if (!openaiApiKey) {
       return new Response(
@@ -707,6 +713,7 @@ Deno.serve(async (req: Request) => {
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
+      console.error("No Authorization header provided");
       return new Response(JSON.stringify({ error: "Missing authorization" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -716,26 +723,23 @@ Deno.serve(async (req: Request) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
+    console.log("Initializing Supabase service client...");
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const userClient = createClient(
-      supabaseUrl,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      {
-        global: { headers: { Authorization: authHeader } },
-      }
-    );
-
+    // More robust way to get user in Edge Functions
+    const token = authHeader.replace("Bearer ", "");
+    console.log("Verifying user token...");
+    
     const {
       data: { user },
       error: authError,
-    } = await userClient.auth.getUser();
+    } = await supabase.auth.getUser(token);
 
     if (authError || !user) {
       console.error("Authentication check failed:", {
-        error: authError,
+        error: authError?.message || "User not found",
+        errorDetails: authError,
         hasUser: !!user,
-        authHeaderPresent: !!authHeader,
       });
       return new Response(JSON.stringify({ 
         error: "Unauthorized", 
@@ -745,6 +749,8 @@ Deno.serve(async (req: Request) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    console.log("User authenticated:", user.id);
 
     const { data: config, error: configError } = await supabase
       .from("sync_configurations")
