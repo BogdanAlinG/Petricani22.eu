@@ -216,6 +216,9 @@ export default function ProductSync() {
       const { data: syncData, error: syncInvokeError } = await supabase.functions.invoke(
         'sync-foodnation',
         {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`
+          },
           body: {}
         }
       );
