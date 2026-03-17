@@ -730,8 +730,17 @@ Deno.serve(async (req: Request) => {
       data: { user },
       error: authError,
     } = await userClient.auth.getUser();
+
     if (authError || !user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      console.error("Authentication check failed:", {
+        error: authError,
+        hasUser: !!user,
+        authHeaderPresent: !!authHeader,
+      });
+      return new Response(JSON.stringify({ 
+        error: "Unauthorized", 
+        details: authError?.message || "User not found or session invalid" 
+      }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
