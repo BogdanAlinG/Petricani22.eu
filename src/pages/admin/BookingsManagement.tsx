@@ -6,7 +6,6 @@ import {
   Eye,
   CheckCircle,
   XCircle,
-  Clock,
   CreditCard,
   User,
   Mail,
@@ -16,9 +15,11 @@ import {
   Loader,
   Download,
   RefreshCw,
+  Trash2,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useToast } from '../../components/ui/Toast';
+import { useConfirm } from '../../components/ui/ConfirmDialog';
 import type { Booking, Accommodation } from '../../types/accommodation';
 
 const STATUS_COLORS = {
@@ -42,6 +43,7 @@ interface BookingWithAccommodation extends Booking {
 
 export default function BookingsManagement() {
   const toast = useToast();
+  const confirm = useConfirm();
   const [bookings, setBookings] = useState<BookingWithAccommodation[]>([]);
   const [accommodations, setAccommodations] = useState<Accommodation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -109,6 +111,34 @@ export default function BookingsManagement() {
     } catch (err) {
       console.error('Error updating booking:', err);
       toast.error('Failed to update booking status');
+    } finally {
+      setUpdating(false);
+    }
+  };
+  
+  const handleDeleteBooking = async (bookingId: string) => {
+    const isConfirmed = await confirm({
+      title: 'Delete Booking',
+      message: 'Are you sure you want to delete this booking? This action cannot be undone.',
+      confirmLabel: 'Delete',
+      variant: 'danger',
+    });
+
+    if (!isConfirmed) return;
+
+    setUpdating(true);
+    try {
+      const { error } = await supabase.from('bookings').delete().eq('id', bookingId);
+      if (error) throw error;
+
+      setBookings(bookings.filter((b) => b.id !== bookingId));
+      if (selectedBooking?.id === bookingId) {
+        setSelectedBooking(null);
+      }
+      toast.success('Booking deleted successfully');
+    } catch (err) {
+      console.error('Error deleting booking:', err);
+      toast.error('Failed to delete booking');
     } finally {
       setUpdating(false);
     }
@@ -348,12 +378,21 @@ export default function BookingsManagement() {
                       </span>
                     </td>
                     <td className="px-4 py-4">
-                      <button
-                        onClick={() => setSelectedBooking(booking)}
-                        className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => setSelectedBooking(booking)}
+                          className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteBooking(booking.id)}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Delete Booking"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -539,6 +578,14 @@ export default function BookingsManagement() {
                       Complete / Check Out
                     </button>
                   )}
+                  <button
+                    onClick={() => handleDeleteBooking(selectedBooking.id)}
+                    disabled={updating}
+                    className="flex items-center gap-2 px-4 py-2 bg-white text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50 ml-auto"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Delete Booking
+                  </button>
                 </div>
               </div>
 
