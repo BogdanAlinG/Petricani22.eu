@@ -8,5 +8,10 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 // Initialize Supabase client
-// Triggering redeploy to ensure Vercel environment variables are picked up
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Only create the client if the URL is valid to prevent app crashes
+export const supabase = (supabaseUrl && supabaseUrl.startsWith('http'))
+  ? createClient(supabaseUrl, supabaseAnonKey)
+  : (() => {
+      console.error('Supabase client failed to initialize: Missing or invalid URL.');
+      return null as any;
+    })();
