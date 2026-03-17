@@ -1,0 +1,141 @@
+{
+  "features": null,
+  "amenities": [
+    {
+      "id": "e4f23e91-eb5c-4315-8d84-6416e9dab432",
+      "name_ro": "Aer Conditionat"
+    },
+    {
+      "id": "3a481ff9-864b-4bf2-9123-2612c03f72d3",
+      "name_ro": "Incalzire"
+    },
+    {
+      "id": "d005a487-2998-4859-9b5d-894e7baf59b4",
+      "name_ro": "Dulap"
+    },
+    {
+      "id": "e7a00d1b-73f3-4c14-b411-a89b7dbc269e",
+      "name_ro": "Birou de Lucru"
+    },
+    {
+      "id": "6e09e948-90fe-4306-aeb8-329a99e62e38",
+      "name_ro": "Draperii Blackout"
+    },
+    {
+      "id": "d9f2714e-3f13-459e-a7e7-b2b09c53934a",
+      "name_ro": "Dus"
+    },
+    {
+      "id": "52a52313-3446-47b4-a942-27e219cb73ba",
+      "name_ro": "Cada"
+    },
+    {
+      "id": "ea84bc3c-5e71-41d1-a129-41198872d0a0",
+      "name_ro": "Uscator de Par"
+    },
+    {
+      "id": "23138aca-5f15-4507-b799-e2ee55a3cd0d",
+      "name_ro": "Articole de Toaleta"
+    },
+    {
+      "id": "1457bb8a-d621-472e-b7ad-f1ac99b1b631",
+      "name_ro": "Prosoape Curate"
+    },
+    {
+      "id": "a1ff9a9e-8108-4453-893c-ad7baf30ca75",
+      "name_ro": "Bucatarie Completa"
+    },
+    {
+      "id": "bc1c0382-7974-44f1-a2e5-c5ed11fba793",
+      "name_ro": "Frigider"
+    },
+    {
+      "id": "0c4ecd6e-fcb2-4681-b78c-0300256cbbe3",
+      "name_ro": "Cuptor cu Microunde"
+    },
+    {
+      "id": "4c500083-c9fc-4a1c-852e-626f4901406d",
+      "name_ro": "Aparat de Cafea"
+    },
+    {
+      "id": "8c47449f-3e45-4cd0-92a9-eb1a70f48e04",
+      "name_ro": "Masina de Spalat Vase"
+    },
+    {
+      "id": "717006a6-e48b-4097-9ee2-f6369d3a0d66",
+      "name_ro": "Smart TV"
+    },
+    {
+      "id": "eb9e55ef-5645-4c29-b01b-038853c5ef33",
+      "name_ro": "WiFi de Mare Viteza"
+    },
+    {
+      "id": "5a5c0b40-3531-426b-8f52-1d81d4380e89",
+      "name_ro": "Servicii de Streaming"
+    },
+    {
+      "id": "714fa942-c75f-43d7-aea1-f218b302854e",
+      "name_ro": "Boxa Bluetooth"
+    },
+    {
+      "id": "4a245c88-6b61-4c95-a371-0b4418e3ddf3",
+      "name_ro": "Balcon"
+    },
+    {
+      "id": "d120a12f-a06d-4fad-9e06-04fe2ff82c7e",
+      "name_ro": "Terasa"
+    },
+    {
+      "id": "776bad3e-caa3-4840-ac07-f1ad2c3fa82d",
+      "name_ro": "Acces la Gradina"
+    },
+    {
+      "id": "ad835961-38e9-4d6b-bab5-908b2c062b07",
+      "name_ro": "Gratar"
+    },
+    {
+      "id": "6df387fd-64a6-4c08-bd1f-fe0ca0613626",
+      "name_ro": "Parcare Gratuita"
+    },
+    {
+      "id": "e12395ef-0ec1-498b-87fc-5e3200c76997",
+      "name_ro": "Garaj"
+    },
+    {
+      "id": "cce2a4eb-be14-4cf4-8f76-a649c1a93265",
+      "name_ro": "Incarcare Vehicule Electrice"
+    },
+    {
+      "id": "c3caf546-2a7d-43aa-97dc-323d2547da42",
+      "name_ro": "Detector de Fum"
+    },
+    {
+      "id": "4cba545a-5acb-4749-a395-bf17140f39da",
+      "name_ro": "Extinctor"
+    },
+    {
+      "id": "f640bbff-1f1f-4d07-b3ba-d922d6cd62b9",
+      "name_ro": "Trusa de Prim Ajutor"
+    },
+    {
+      "id": "50f3180f-b776-4248-8dd9-72d3fedfc301",
+      "name_ro": "Seif"
+    },
+    {
+      "id": "c986acb1-9748-4a0e-a321-bb364ef3fbdd",
+      "name_ro": "Curatenie Zilnica"
+    },
+    {
+      "id": "f6032b42-07ab-4845-9513-3667c70ba6cf",
+      "name_ro": "Serviciu de Spalatorie"
+    },
+    {
+      "id": "b2ad5dba-465a-4e9b-8efb-9450dfbcc8ae",
+      "name_ro": "Concierge"
+    },
+    {
+      "id": "452d321c-c248-4e71-83f7-fed9ebee0cea",
+      "name_ro": "Depozitare Bagaje"
+    }
+  ]
+}

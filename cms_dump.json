@@ -1,0 +1,110 @@
+{
+  "sections": [
+    {
+      "id": "bf4dc806-5fc7-423c-8000-2640ac2b14d4",
+      "section": "categories",
+      "title_ro": "ExploreazÄƒ pe Categorii",
+      "subtitle_ro": null,
+      "content_ro": null,
+      "settings": {}
+    },
+    {
+      "id": "b17959bc-59ae-46f0-b9de-4d9c70dd5ade",
+      "section": "testimonials",
+      "title_ro": "Ce Spun OaspeÈ›ii NoÈ™tri",
+      "subtitle_ro": "AscultaÈ›i experienÈ›ele celor care au vizitat Petricani 22",
+      "content_ro": null,
+      "settings": {}
+    },
+    {
+      "id": "15cf6d68-2280-4ec5-9e6d-23dd9b92f129",
+      "section": "faq",
+      "title_ro": "ÃŽntrebÄƒri Frecvente",
+      "subtitle_ro": "GÄƒsiÈ›i rÄƒspunsuri la cele mai frecvente Ã®ntrebÄƒri despre proprietatea noastrÄƒ",
+      "content_ro": null,
+      "settings": {}
+    },
+    {
+      "id": "c5d0a931-85d8-41be-a42d-ac696006d059",
+      "section": "gallery",
+      "title_ro": "Galerie Foto",
+      "subtitle_ro": "ExploreazÄƒ spaÈ›iile È™i facilitÄƒÈ›ile proprietÄƒÈ›ii",
+      "content_ro": null,
+      "settings": {}
+    },
+    {
+      "id": "c8c90d8c-f785-400f-b5d7-04e16494703d",
+      "section": "contact",
+      "title_ro": "ContactaÈ›i-ne",
+      "subtitle_ro": "Suntem aici pentru a vÄƒ ajuta sÄƒ gÄƒsiÈ›i configuraÈ›ia perfectÄƒ",
+      "content_ro": null,
+      "settings": {
+        "hours_label_en": "Hours",
+        "hours_label_ro": "Program",
+        "phone_label_en": "Phone",
+        "phone_label_ro": "Telefon",
+        "address_label_en": "Address",
+        "address_label_ro": "Adresă"
+      }
+    },
+    {
+      "id": "e4c0417e-03fc-4f36-81ed-8c1d5edf341e",
+      "section": "amenities",
+      "title_ro": "FacilitÄƒÈ›i È™i Servicii",
+      "subtitle_ro": "Toate facilitÄƒÈ›ile necesare pentru o experienÈ›Äƒ confortabilÄƒ",
+      "content_ro": null,
+      "settings": {
+        "special_features_title_en": "Special Features",
+        "special_features_title_ro": "FacilitÄƒÈ›i Speciale"
+      }
+    },
+    {
+      "id": "e12c3d72-92b7-4adf-a141-16c910221e73",
+      "section": "features",
+      "title_ro": "Caracteristici Cheie",
+      "subtitle_ro": "Spatiu generos cu facilitati moderne pentru orice tip de utilizare",
+      "content_ro": null,
+      "settings": {}
+    },
+    {
+      "id": "f967ce8f-1877-4808-8acc-34a783e1bed2",
+      "section": "hero",
+      "title_ro": "Descopera cum poti folosi spatiul de la Petricani 22",
+      "subtitle_ro": "Inspiratie pentru locuire, birouri, evenimente si mai mult",
+      "content_ro": null,
+      "settings": {
+        "intro_title_en": "Real ideas, useful tips, and creative examples",
+        "intro_title_ro": "Idei reale, sfaturi utile si exemple creative",
+        "intro_description_en": "To help you imagine how this versatile space can be used - from modern living to outdoor events or flexible workspaces.",
+        "intro_description_ro": "Pentru a-ti imagina ce se poate face cu aceasta proprietate versatila - de la locuire moderna la evenimente in aer liber sau spatii de lucru."
+      }
+    },
+    {
+      "id": "8c8273c2-1206-4294-9737-80f464ddb94b",
+      "section": "location",
+      "title_ro": "LocaÈ›ie PrivilegiatÄƒ",
+      "subtitle_ro": "ÃŽn inima BucureÈ™tiului cu acces facil la toate facilitÄƒÈ›ile",
+      "content_ro": null,
+      "settings": {
+        "map_title_en": "Find us on the map",
+        "map_title_ro": "GÄƒseÈ™te-ne pe hartÄƒ",
+        "nearby_title_en": "Nearby",
+        "nearby_title_ro": "ÃŽn apropiere"
+      }
+    },
+    {
+      "id": "a13b34a6-61a4-4464-b4d2-a864c1fe612c",
+      "section": "hero",
+      "title_ro": "OazÄƒ UrbanÄƒ Ã®n Petricani: MÃ¢ncare, Evenimente & Locuit",
+      "subtitle_ro": "LocaÈ›ie multifuncÈ›ionalÄƒ premium ce dispune de curte pentru evenimente, hub gastronomic dedicat Street Food/Horeca È™i unitÄƒÈ›i de cazare individuale.",
+      "content_ro": "<p data-path-to-node=\"6\">VÄƒ prezentÄƒm un concept versatil, conceput sÄƒ integreze armonios trei piloni principali: evenimente Ã®n aer liber, gastronomie È™i ospitalitate. SpaÈ›iul include o curte generoasÄƒ, idealÄƒ pentru organizarea de evenimente private sau corporate, completatÄƒ de o zonÄƒ tehnicÄƒ special amenajatÄƒ pentru operatori Horeca È™i food trucks. ÃŽn plus, locaÈ›ia oferÄƒ confort prin camerele de Ã®nchiriat disponibile, fiind soluÈ›ia completÄƒ pentru proiecte de tip pop-up, festivaluri restrÃ¢nse sau escapade urbane cu facilitÄƒÈ›i incluse.</p>",
+      "settings": {
+        "cta1_en": "Request Custom Offer",
+        "cta1_ro": "Solicită Ofertă Personalizată",
+        "cta2_en": "Schedule Viewing",
+        "cta2_ro": "Programează Vizionare"
+      }
+    }
+  ],
+  "blocks": null
+}

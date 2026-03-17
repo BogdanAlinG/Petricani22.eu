@@ -1,0 +1,171 @@
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "npm:@supabase/supabase-js@2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
+};
+
+interface GenerateRequest {
+  type: "faq" | "faq_answer" | "article_title" | "article_excerpt" | "article_content" | "section_title" | "section_subtitle" | "block_title" | "block_description" | "translate" | "product_short_description" | "product_full_description";
+  language: "en" | "ro";
+  context?: string;
+  existingContent?: string;
+  category?: string;
+}
+
+const BASE_SYSTEM_PROMPT = `You are a content writer for "Petricani 22", a premium property rental in Bucharest, Romania.
+The property is a versatile space that can be used for modern living, events, offices, and commercial purposes.
+It features a large indoor area, outdoor courtyard/garden, and premium amenities.
+Write concise, professional, engaging content. Be specific to this property.`;
+
+const PROMPTS: Record<string, (req: GenerateRequest) => string> = {
+  faq: (req) => `Generate a frequently asked question about ${req.category || "the property"} for Petricani 22 in ${req.language === "ro" ? "Romanian" : "English"}.
+Return ONLY the question text, no punctuation marks at the end besides "?".${req.context ? ` Context: ${req.context}` : ""}`,
+
+  faq_answer: (req) => `Write a helpful, detailed answer for this FAQ question about Petricani 22 in ${req.language === "ro" ? "Romanian" : "English"}:
+"${req.context}"
+Return the answer as plain text, 2-4 sentences. Be specific and informative.`,
+
+  article_title: (req) => `Write a compelling blog article title for Petricani 22 property in ${req.language === "ro" ? "Romanian" : "English"}.
+Category: ${req.category || "general"}${req.context ? `\nContext/topic: ${req.context}` : ""}
+Return ONLY the title text, no quotes.`,
+
+  article_excerpt: (req) => `Write a 1-2 sentence excerpt/summary for a blog article about Petricani 22 in ${req.language === "ro" ? "Romanian" : "English"}.
+${req.context ? `Article title or topic: ${req.context}` : ""}
+Return ONLY the excerpt text.`,
+
+  article_content: (req) => `Write a complete blog article for Petricani 22 property in ${req.language === "ro" ? "Romanian" : "English"}.
+${req.context ? `Title/topic: ${req.context}` : ""}
+Category: ${req.category || "general"}
+Format the response as HTML with <h2>, <p>, <ul>/<li> tags. Include 3-4 sections with practical tips or insights. Around 400-600 words.
+IMPORTANT: Return ONLY raw HTML tags and text. Do NOT wrap in markdown code fences or backticks.`,
+
+  section_title: (req) => `Write a short, impactful section title for the "${req.context || "section"}" of the Petricani 22 website in ${req.language === "ro" ? "Romanian" : "English"}.
+Return ONLY the title text, max 8 words.`,
+
+  section_subtitle: (req) => `Write a descriptive subtitle for the "${req.context || "section"}" of the Petricani 22 website in ${req.language === "ro" ? "Romanian" : "English"}.
+${req.existingContent ? `Section title: ${req.existingContent}` : ""}
+Return ONLY the subtitle text, 1-2 sentences.`,
+
+  block_title: (req) => `Write a short title for a content block about "${req.context || "feature"}" on the Petricani 22 website in ${req.language === "ro" ? "Romanian" : "English"}.
+Return ONLY the title, 2-5 words.`,
+
+  block_description: (req) => `Write a brief description for a content block about "${req.context || "feature"}" on the Petricani 22 website in ${req.language === "ro" ? "Romanian" : "English"}.
+${req.existingContent ? `Block title: ${req.existingContent}` : ""}
+Return ONLY the description, 1-2 sentences.`,
+
+  translate: (req) => {
+    const targetLang = req.language === "ro" ? "Romanian" : "English";
+    const sourceLang = req.language === "ro" ? "English" : "Romanian";
+    const isHtml = req.existingContent && /<[a-z][\s\S]*>/i.test(req.existingContent);
+    return `Translate the following ${sourceLang} text to ${targetLang}. Preserve the meaning and tone.${isHtml ? " The text contains HTML tags — preserve all HTML tags exactly, only translate the text content inside them. Do NOT wrap the output in markdown code fences." : " Return ONLY the translated text."}
+
+Text to translate:
+${req.existingContent || req.context || ""}`;
+  },
+
+  product_short_description: (req) => `Write a short 1-sentence menu description for a product called "${req.context || "menu item"}" at Petricani 22 in ${req.language === "ro" ? "Romanian" : "English"}.
+${req.category ? `Category: ${req.category}` : ""}
+Return ONLY the description text. Keep it appetising and concise.`,
+
+  product_full_description: (req) => `Write a full 2-3 sentence menu description for a product called "${req.context || "menu item"}" at Petricani 22 in ${req.language === "ro" ? "Romanian" : "English"}.
+${req.category ? `Category: ${req.category}` : ""}
+Return ONLY the description text. Be descriptive, highlight flavours or key qualities.`,
+};
+
+async function fetchAiPointers(language: "en" | "ro"): Promise<string> {
+  try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!supabaseUrl || !supabaseKey) return "";
+
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    const { data } = await supabase
+      .from("site_settings")
+      .select("value_en, value_ro")
+      .eq("key", "ai_pointers")
+      .maybeSingle();
+
+    if (!data) return "";
+    const pointers = language === "ro" ? data.value_ro : data.value_en;
+    return pointers?.trim() || "";
+  } catch {
+    return "";
+  }
+}
+
+Deno.serve(async (req: Request) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { status: 200, headers: corsHeaders });
+  }
+
+  try {
+    const openaiKey = Deno.env.get("OPENAI_API_KEY");
+    if (!openaiKey) {
+      return new Response(
+        JSON.stringify({ error: "AI service not configured" }),
+        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const body: GenerateRequest = await req.json();
+    const { type, language, context, existingContent, category } = body;
+
+    const promptFn = PROMPTS[type];
+    if (!promptFn) {
+      return new Response(
+        JSON.stringify({ error: `Unknown generation type: ${type}` }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const aiPointers = await fetchAiPointers(language);
+    const systemPrompt = aiPointers
+      ? `${BASE_SYSTEM_PROMPT}\n\nIMPORTANT FACTS — always follow these:\n${aiPointers}`
+      : BASE_SYSTEM_PROMPT;
+
+    const userPrompt = promptFn({ type, language, context, existingContent, category });
+
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${openaiKey}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-4.1",
+        max_tokens: 2048,
+        temperature: 0.7,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("OpenAI API error:", response.status, errorText);
+      return new Response(
+        JSON.stringify({ error: "AI generation failed" }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const data = await response.json();
+    const generated = data.choices?.[0]?.message?.content || "";
+
+    return new Response(
+      JSON.stringify({ result: generated.trim() }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  } catch (err) {
+    console.error("ai-generate error:", err);
+    return new Response(
+      JSON.stringify({ error: "Internal server error" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+});
