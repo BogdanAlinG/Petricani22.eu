@@ -728,6 +728,12 @@ Deno.serve(async (req: Request) => {
 
     // More robust way to get user in Edge Functions
     const token = authHeader.replace("Bearer ", "");
+    console.log("Token verification details:", {
+      headerLength: authHeader.length,
+      tokenLength: token.length,
+      tokenStart: token.substring(0, 15) + "...",
+    });
+    
     console.log("Verifying user token...");
     
     const {
