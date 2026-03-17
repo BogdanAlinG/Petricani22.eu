@@ -7,4 +7,6 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables');
 }
 
+// Initialize Supabase client
+// Triggering redeploy to ensure Vercel environment variables are picked up
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
