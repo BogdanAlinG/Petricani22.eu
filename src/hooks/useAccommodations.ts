@@ -320,12 +320,23 @@ export function usePriceCalculation(
       return;
     }
 
+    // Determine the base daily rate based on tiered pricing durations
+    let baseDailyRate = accommodation.base_price_per_night;
+    
+    if (nights >= 365 && accommodation.price_yearly > 0) {
+      baseDailyRate = accommodation.price_yearly / 365;
+    } else if (nights >= 30 && accommodation.price_monthly > 0) {
+      baseDailyRate = accommodation.price_monthly / 30;
+    } else if (nights >= 7 && accommodation.price_weekly > 0) {
+      baseDailyRate = accommodation.price_weekly / 7;
+    }
+
     let totalPrice = 0;
     const current = new Date(checkIn);
 
     while (current < checkOut) {
       const dateStr = current.toISOString().split('T')[0];
-      let dayPrice = accommodation.base_price_per_night;
+      let dayPrice = baseDailyRate;
 
       const applicableRule = pricingRules.find(
         (rule) => dateStr >= rule.start_date && dateStr <= rule.end_date

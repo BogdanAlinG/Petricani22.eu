@@ -14,6 +14,9 @@ export interface Accommodation {
   max_guests: number;
   sqm: number | null;
   base_price_per_night: number;
+  price_weekly: number;
+  price_monthly: number;
+  price_yearly: number;
   cleaning_fee: number;
   minimum_nights: number;
   maximum_nights: number;

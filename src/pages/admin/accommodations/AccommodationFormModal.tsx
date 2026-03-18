@@ -396,7 +396,7 @@ function PricingTab({
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Base Price per Night (EUR)</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Base Price (Daily) (EUR)</label>
           <input
             type="number"
             min="0"
@@ -406,6 +406,45 @@ function PricingTab({
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
           />
         </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Weekly Price (7 nights) (EUR)</label>
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            value={editing.price_weekly}
+            onChange={(e) => onFieldChange({ price_weekly: parseFloat(e.target.value) || 0 })}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Monthly Price (30 nights) (EUR)</label>
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            value={editing.price_monthly}
+            onChange={(e) => onFieldChange({ price_monthly: parseFloat(e.target.value) || 0 })}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Yearly Price (365 nights) (EUR)</label>
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            value={editing.price_yearly}
+            onChange={(e) => onFieldChange({ price_yearly: parseFloat(e.target.value) || 0 })}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Cleaning Fee (EUR)</label>
           <input
