@@ -1,5 +1,8 @@
 # Project Lessons
 
+## AI Optimization
+- **Model Naming**: ALWAYS use `gpt-4.1` as the model name for OpenAI completions in this project. Do not "upgrade" it to `gpt-4o` or other standard names unless explicitly requested by the user. This is a project-specific configuration requirement.
+
 ## Supabase Edge Functions
 - **Deployment**: Modifying `supabase/functions/*/index.ts` locally does NOT automatically update the production function. You must manually deploy after changes using `mcp_supabase_deploy_edge_function` or the CLI (`supabase functions deploy [slug]`).
 - **JWT Verification**: If a function is called from the client-side (like the admin panel) and `verify_jwt: true` causes 401 errors, consider setting it to `false` and relying on the `apikey` header/CORS, or ensuring the correct user JWT is passed in the `Authorization` header.

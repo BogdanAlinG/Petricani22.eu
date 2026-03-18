@@ -368,7 +368,7 @@ async function cleanAndTranslateWithAI(
           Authorization: `Bearer ${openaiApiKey}`,
         },
         body: JSON.stringify({
-          model: "gpt-4o",
+          model: "gpt-4.1",
           messages: [
             { role: "system", content: AI_CLEANING_SYSTEM_PROMPT },
             { role: "user", content: userContent },

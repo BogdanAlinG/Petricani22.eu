@@ -165,7 +165,11 @@ Deno.serve(async (req: Request) => {
       : BASE_SYSTEM_PROMPT;
 
     const userPrompt = promptFn({ ...body });
+    
+    console.log(`Generating AI content for type: ${type}, language: ${language}`);
+    console.log(`Prompt length: ${userPrompt.length} chars`);
 
+    const startTime = Date.now();
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -182,6 +186,9 @@ Deno.serve(async (req: Request) => {
         ],
       }),
     });
+
+    const endTime = Date.now();
+    console.log(`OpenAI API responded in ${endTime - startTime}ms`);
 
     if (!response.ok) {
       const errorText = await response.text();
