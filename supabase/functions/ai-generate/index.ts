@@ -28,6 +28,7 @@ interface GenerateRequest {
   existingContent?: string;
   category?: string;
   keywords?: string;
+  direction?: string;
 }
 
 const BASE_SYSTEM_PROMPT = `You are a content writer for "Petricani 22", a premium property rental in Bucharest, Romania.
@@ -44,26 +45,26 @@ Return ONLY the question text, no punctuation marks at the end besides "?".${req
 Return the answer as plain text, 2-4 sentences. Be specific and informative.`,
 
   article_title: (req) => `Write a compelling blog article title for Petricani 22 property in ${req.language === "ro" ? "Romanian" : "English"}.
-Category: ${req.category || "general"}${req.keywords ? `\nFocus Keywords: ${req.keywords}` : ""}${req.context ? `\nContext/topic: ${req.context}` : ""}
+Category: ${req.category || "general"}${req.keywords ? `\nFocus Keywords: ${req.keywords}` : ""}${req.direction ? `\nDirection/Tone: ${req.direction}` : ""}${req.context ? `\nContext/topic: ${req.context}` : ""}
 Return ONLY the title text, no quotes.`,
 
   article_excerpt: (req) => `Write a 1-2 sentence excerpt/summary for a blog article about Petricani 22 in ${req.language === "ro" ? "Romanian" : "English"}.
-${req.context ? `Article title or topic: ${req.context}` : ""}
+${req.direction ? `Direction/Intent: ${req.direction}` : ""}${req.context ? `\nArticle title or topic: ${req.context}` : ""}
 Return ONLY the excerpt text.`,
 
   article_content: (req) => `Write a complete blog article for Petricani 22 property in ${req.language === "ro" ? "Romanian" : "English"}.
 ${req.context ? `Title/topic: ${req.context}` : ""}
-Category: ${req.category || "general"}${req.keywords ? `\nTarget SEO/Adwords Keywords: ${req.keywords}` : ""}
-Format the response as HTML with <h2>, <p>, <ul>/<li> tags. Include 3-4 sections with practical tips or insights. Around 400-600 words.
+Category: ${req.category || "general"}${req.keywords ? `\nTarget SEO/Adwords Keywords: ${req.keywords}` : ""}${req.direction ? `\nSpecific Direction/Context: ${req.direction}` : ""}
+Format the response as HTML with <h2>, <p>, <ul>/<li> tags. Include 3-4 sections. Around 400-600 words.
 IMPORTANT: Return ONLY raw HTML tags and text. Do NOT wrap in markdown code fences or backticks.`,
 
   article_slug: (req) => `Generate a URL-friendly slug (URL ID) for a blog article about Petricani 22.
-${req.context ? `Title: ${req.context}` : ""}${req.keywords ? `\nSEO/Adwords Keywords: ${req.keywords}` : ""}
+${req.context ? `Title: ${req.context}` : ""}${req.keywords ? `\nSEO/Adwords Keywords: ${req.keywords}` : ""}${req.direction ? `\nDirection/Context: ${req.direction}` : ""}
 The slug should be lowercase, using only letters, numbers, and hyphens. Max 50 characters.
 Return ONLY the slug text, nothing else.`,
 
   article_tags: (req) => `Generate 3-5 relevant SEO tags/keywords for a blog article about Petricani 22.
-${req.context ? `Title/Topic: ${req.context}` : ""}${req.keywords ? `\nPromotion Keywords: ${req.keywords}` : ""}
+${req.context ? `Title/Topic: ${req.context}` : ""}${req.keywords ? `\nPromotion Keywords: ${req.keywords}` : ""}${req.direction ? `\nDirection/Intent: ${req.direction}` : ""}
 Return ONLY the tags separated by commas. Max 3 words per tag.`,
 
   section_title: (req) => `Write a short, impactful section title for the "${req.context || "section"}" of the Petricani 22 website in ${req.language === "ro" ? "Romanian" : "English"}.

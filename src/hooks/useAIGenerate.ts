@@ -24,6 +24,7 @@ interface GenerateOptions {
   existingContent?: string;
   category?: string;
   keywords?: string;
+  direction?: string;
 }
 
 export function useAIGenerate() {

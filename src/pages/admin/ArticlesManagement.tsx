@@ -38,6 +38,7 @@ interface Article {
   is_visible: boolean;
   tags: string[];
   keywords: string;
+  ai_direction: string;
   display_order: number;
 }
 
@@ -79,6 +80,7 @@ export default function ArticlesManagement() {
     is_featured: false,
     tags: [] as string[],
     keywords: '',
+    ai_direction: '',
   });
 
   const calculateReadTime = (content: string) => {
@@ -164,6 +166,7 @@ export default function ArticlesManagement() {
         is_featured: false,
         tags: [],
         keywords: '',
+        ai_direction: '',
       });
       setTagInput('');
     } catch (error) {
@@ -194,6 +197,8 @@ export default function ArticlesManagement() {
           is_featured: editingArticle.is_featured,
           is_visible: editingArticle.is_visible,
           tags: editingArticle.tags,
+          keywords: editingArticle.keywords,
+          ai_direction: editingArticle.ai_direction,
         })
         .eq('id', editingArticle.id);
 
@@ -338,6 +343,7 @@ export default function ArticlesManagement() {
       category: article?.category,
       context: context || undefined,
       keywords: article?.keywords,
+      direction: article?.ai_direction,
     });
 
     if (!result) {
@@ -419,6 +425,7 @@ export default function ArticlesManagement() {
       language: activeTab,
       context: context || undefined,
       keywords: article.keywords,
+      direction: article.ai_direction,
     });
 
     if (result) {
@@ -441,6 +448,7 @@ export default function ArticlesManagement() {
       language: activeTab,
       context,
       keywords: article.keywords,
+      direction: article.ai_direction,
     });
 
     if (result) {
@@ -749,6 +757,26 @@ export default function ArticlesManagement() {
                 />
                 <p className="text-sm text-gray-500 mt-1">
                   AI will prioritize these keywords when generating content, slugs, and tags
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  AI Generation Direction / Context
+                </label>
+                <textarea
+                  value={editingArticle ? editingArticle.ai_direction : newArticle.ai_direction}
+                  onChange={(e) =>
+                    editingArticle
+                      ? setEditingArticle({ ...editingArticle, ai_direction: e.target.value })
+                      : setNewArticle({ ...newArticle, ai_direction: e.target.value })
+                  }
+                  placeholder="e.g., Promote this property as a business event venue / Party house vibe / Family home description"
+                  rows={2}
+                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                />
+                <p className="text-sm text-gray-500 mt-1">
+                  Guides the tone and intent of the generated content. Use for differentiating between different article angles.
                 </p>
               </div>
 
@@ -1101,6 +1129,25 @@ export default function ArticlesManagement() {
                       </button>
                     </span>
                   ))}
+                </div>
+
+                {/* Tag Pool / Suggestions */}
+                <div className="mt-4">
+                  <p className="text-xs font-medium text-gray-500 mb-2 uppercase tracking-wider">Suggested from your library</p>
+                  <div className="flex flex-wrap gap-2">
+                    {Array.from(new Set(articles.flatMap(a => a.tags)))
+                      .filter(tag => !(editingArticle ? editingArticle.tags : newArticle.tags).includes(tag))
+                      .slice(0, 15)
+                      .map(tag => (
+                        <button
+                          key={tag}
+                          onClick={() => addTag(tag, !!editingArticle)}
+                          className="text-xs bg-gray-50 text-gray-500 px-2 py-1 rounded border border-gray-200 hover:bg-gray-100 transition-colors"
+                        >
+                          + {tag}
+                        </button>
+                      ))}
+                  </div>
                 </div>
               </div>
 
