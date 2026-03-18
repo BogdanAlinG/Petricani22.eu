@@ -97,7 +97,7 @@ export default function CategoryFormModal({
             </div>
             {accommodations.length > 0 && (
               <div className="mt-2">
-                <p className="text-xs text-gray-500 mb-1">Or link to a specific unit:</p>
+                <p className="text-xs text-gray-500 mb-1">Or link to a specific rental:</p>
                 <div className="flex flex-wrap gap-2">
                   {accommodations.map((acc) => (
                     <button
@@ -123,7 +123,7 @@ export default function CategoryFormModal({
               <Lock className="w-4 h-4 text-amber-600 shrink-0" />
               <div>
                 <p className="text-sm font-medium text-amber-900">Require PIN</p>
-                <p className="text-xs text-amber-600">Entire category is locked behind the accommodation PIN</p>
+                <p className="text-xs text-amber-600">Entire category is locked behind the rental PIN</p>
               </div>
             </div>
             <button

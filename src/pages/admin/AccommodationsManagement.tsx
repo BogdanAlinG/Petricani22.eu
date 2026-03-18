@@ -199,7 +199,7 @@ export default function AccommodationsManagement() {
         : (err && typeof err === 'object' && 'message' in err)
           ? String((err as { message: string }).message)
           : 'Unknown error';
-      toast.error(`Failed to save accommodation: ${errorMessage}`);
+      toast.error(`Failed to save rental: ${errorMessage}`);
     } finally {
       setSaving(false);
     }
@@ -207,7 +207,7 @@ export default function AccommodationsManagement() {
 
   const handleDelete = async (acc: Accommodation) => {
     const confirmed = await confirm({
-      title: 'Delete Accommodation',
+      title: 'Delete Rental',
       message: `Delete "${acc.title_en}"? This action cannot be undone.`,
       confirmLabel: 'Delete',
       variant: 'danger',
@@ -219,7 +219,7 @@ export default function AccommodationsManagement() {
       setAccommodations(accommodations.filter((a) => a.id !== acc.id));
     } catch (err) {
       console.error('Error deleting accommodation:', err);
-      toast.error('Failed to delete accommodation');
+      toast.error('Failed to delete rental');
     }
   };
 
@@ -248,15 +248,15 @@ export default function AccommodationsManagement() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Accommodations</h1>
-          <p className="text-gray-600 mt-1">Manage your accommodation units</p>
+          <h1 className="text-2xl font-bold text-gray-900">Rentals</h1>
+          <p className="text-gray-600 mt-1">Manage your rental units</p>
         </div>
         <button
           onClick={handleCreate}
           className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors"
         >
           <Plus className="w-5 h-5" />
-          Add Accommodation
+          Add Rental
         </button>
       </div>
 

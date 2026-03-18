@@ -91,7 +91,7 @@ function ItemCard({ item, lang, isGlobal, pinUnlocked, onUnlockRequest }: ItemCa
             )}
             {!isGlobal && !item.requires_pin && (
               <span className="px-2 py-0.5 text-[10px] bg-primary/5 text-primary border border-primary/20 rounded-full font-medium">
-                {lang === 'en' ? 'This unit' : 'Acest apartament'}
+                {lang === 'en' ? 'This rental' : 'Această unitate'}
               </span>
             )}
           </div>

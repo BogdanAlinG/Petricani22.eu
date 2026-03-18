@@ -10,8 +10,8 @@ const Header: React.FC = () => {
   const { homePath, accommodationsPath, menuPath, inspirationPath } = useLocalizedPath();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isAccommodationsDropdownOpen, setIsAccommodationsDropdownOpen] = useState(false);
-  const [isMobileAccommodationsOpen, setIsMobileAccommodationsOpen] = useState(false);
+  const [isRentalsDropdownOpen, setIsRentalsDropdownOpen] = useState(false);
+  const [isMobileRentalsOpen, setIsMobileRentalsOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -21,8 +21,8 @@ const Header: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const accommodationsSubItems = [
-    { label: t('Cazare', 'Accommodations'), href: accommodationsPath, isLink: true },
+  const rentalsSubItems = [
+    { label: t('Închirieri', 'Rentals'), href: accommodationsPath, isLink: true },
     { label: t('Meniu Digital', 'Digital Menu'), href: menuPath, isLink: true }
   ];
 
@@ -48,22 +48,22 @@ const Header: React.FC = () => {
 
             <div
               className="relative"
-              onMouseEnter={() => setIsAccommodationsDropdownOpen(true)}
-              onMouseLeave={() => setIsAccommodationsDropdownOpen(false)}
+              onMouseEnter={() => setIsRentalsDropdownOpen(true)}
+              onMouseLeave={() => setIsRentalsDropdownOpen(false)}
             >
               <button className="flex items-center gap-1 text-gray-700 hover:text-primary transition-colors duration-200 font-medium py-2">
-                {t('Cazare', 'Accommodations')}
-                <ChevronDown size={16} className={`transition-transform ${isAccommodationsDropdownOpen ? 'rotate-180' : ''}`} />
+                {t('Închirieri', 'Rentals')}
+                <ChevronDown size={16} className={`transition-transform ${isRentalsDropdownOpen ? 'rotate-180' : ''}`} />
               </button>
 
-              {isAccommodationsDropdownOpen && (
+              {isRentalsDropdownOpen && (
                 <div className="absolute top-full left-0 pt-2 w-48">
                   <div className="bg-white rounded-lg shadow-xl border border-gray-200 py-2">
-                    {accommodationsSubItems.map((subItem) => (
+                    {rentalsSubItems.map((subItem) => (
                       <Link
                         key={subItem.label}
                         to={subItem.href}
-                        onClick={() => setIsAccommodationsDropdownOpen(false)}
+                        onClick={() => setIsRentalsDropdownOpen(false)}
                         className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-primary/10 hover:text-primary transition-colors"
                       >
                         {subItem.label}
@@ -135,26 +135,26 @@ const Header: React.FC = () => {
 
             <div className="border-b border-gray-100">
               <button
-                onClick={() => setIsMobileAccommodationsOpen(!isMobileAccommodationsOpen)}
+                onClick={() => setIsMobileRentalsOpen(!isMobileRentalsOpen)}
                 className="w-full flex items-center justify-between py-4 min-h-[48px] text-gray-700 hover:text-primary active:bg-gray-50 transition-colors font-medium"
               >
-                {t('Cazare', 'Accommodations')}
-                <ChevronDown size={20} className={`transition-transform duration-200 ${isMobileAccommodationsOpen ? 'rotate-180' : ''}`} />
+                {t('Închirieri', 'Rentals')}
+                <ChevronDown size={20} className={`transition-transform duration-200 ${isMobileRentalsOpen ? 'rotate-180' : ''}`} />
               </button>
 
               <div
                 className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                  isMobileAccommodationsOpen ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'
+                  isMobileRentalsOpen ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'
                 }`}
               >
                 <div className="pb-2 flex flex-col bg-gray-50 -mx-4 px-4">
-                  {accommodationsSubItems.map((subItem) => (
+                  {rentalsSubItems.map((subItem) => (
                     <Link
                       key={subItem.label}
                       to={subItem.href}
                       onClick={() => {
                         setIsMenuOpen(false);
-                        setIsMobileAccommodationsOpen(false);
+                        setIsMobileRentalsOpen(false);
                       }}
                       className="text-left py-3 min-h-[44px] pl-4 text-gray-600 hover:text-primary active:bg-gray-100 transition-colors"
                     >

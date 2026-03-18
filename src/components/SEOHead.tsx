@@ -12,12 +12,12 @@ interface SEOConfig {
 const PAGE_SEO: Record<string, Record<string, SEOConfig>> = {
   RO: {
     '/ro': {
-      title: 'Petricani 22 - Cazare & Servicii Premium',
-      description: 'Cazare premium in Petricani 22. Rezervari online, meniu room service si servicii de calitate.',
+      title: 'Petricani 22 - Închirieri & Servicii Premium',
+      description: 'Închirieri spații premium în Petricani 22. Rezervări online, meniu room service și servicii de calitate.',
     },
-    '/ro/cazare': {
-      title: 'Cazare - Petricani 22',
-      description: 'Descopera unitatile noastre de cazare. Apartamente si camere confortabile cu toate dotarile necesare.',
+    '/ro/inchirieri': {
+      title: 'Unități de Închiriat - Petricani 22',
+      description: 'Descoperă unitățile noastre. Spații și camere confortabile cu toate dotările necesare.',
     },
     '/ro/meniu': {
       title: 'Meniu Room Service - Petricani 22',
@@ -34,12 +34,12 @@ const PAGE_SEO: Record<string, Record<string, SEOConfig>> = {
   },
   EN: {
     '/en': {
-      title: 'Petricani 22 - Premium Accommodation & Services',
-      description: 'Premium accommodation at Petricani 22. Online bookings, room service menu and quality services.',
+      title: 'Petricani 22 - Premium Rentals & Services',
+      description: 'Premium rentals at Petricani 22. Online bookings, room service menu and quality services.',
     },
-    '/en/accommodations': {
-      title: 'Accommodations - Petricani 22',
-      description: 'Discover our accommodation units. Comfortable apartments and rooms with all necessary amenities.',
+    '/en/rentals': {
+      title: 'Rentals - Petricani 22',
+      description: 'Discover our rental units. Comfortable spaces and rooms with all necessary amenities.',
     },
     '/en/menu': {
       title: 'Room Service Menu - Petricani 22',
@@ -62,8 +62,8 @@ function getPageSEO(pathname: string, language: string): SEOConfig {
   const basePath = pathname.replace(/\/[^/]+$/, '');
   if (langSeo[basePath]) return langSeo[basePath];
   return language === 'RO'
-    ? { title: 'Petricani 22', description: 'Cazare premium si servicii de calitate.' }
-    : { title: 'Petricani 22', description: 'Premium accommodation and quality services.' };
+    ? { title: 'Petricani 22', description: 'Închirieri premium și servicii de calitate.' }
+    : { title: 'Petricani 22', description: 'Premium rentals and quality services.' };
 }
 
 function setOrCreateMeta(name: string, content: string, attribute = 'name') {

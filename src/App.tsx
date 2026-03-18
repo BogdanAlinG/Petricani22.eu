@@ -69,8 +69,8 @@ function App() {
 
                   <Route path="/ro" element={<Layout />}>
                     <Route index element={<HomePage />} />
-                    <Route path="cazare" element={<AccommodationsPage />} />
-                    <Route path="cazare/:slug" element={<AccommodationDetailPage />} />
+                    <Route path="inchirieri" element={<AccommodationsPage />} />
+                    <Route path="inchirieri/:slug" element={<AccommodationDetailPage />} />
                     <Route path="rezerva/:slug" element={<BookingPage />} />
                     <Route path="confirmare-rezervare/:bookingNumber" element={<BookingConfirmationPage />} />
                     <Route path="meniu" element={<MenuLandingPage />} />
@@ -86,8 +86,8 @@ function App() {
 
                   <Route path="/en" element={<Layout />}>
                     <Route index element={<HomePage />} />
-                    <Route path="accommodations" element={<AccommodationsPage />} />
-                    <Route path="accommodations/:slug" element={<AccommodationDetailPage />} />
+                    <Route path="rentals" element={<AccommodationsPage />} />
+                    <Route path="rentals/:slug" element={<AccommodationDetailPage />} />
                     <Route path="book/:slug" element={<BookingPage />} />
                     <Route path="booking-confirmation/:bookingNumber" element={<BookingConfirmationPage />} />
                     <Route path="menu" element={<MenuLandingPage />} />
@@ -127,7 +127,7 @@ function App() {
                     <Route path="faqs" element={<FAQManagement />} />
                     <Route path="testimonials" element={<TestimonialsManagement />} />
                     <Route path="rental-options" element={<RentalOptionsManagement />} />
-                    <Route path="accommodations" element={<AccommodationsManagement />} />
+                    <Route path="rentals" element={<AccommodationsManagement />} />
                     <Route path="bookings" element={<BookingsManagement />} />
                     <Route path="availability" element={<AvailabilityCalendar />} />
                     <Route path="guidebook" element={<GuidebookManagement />} />

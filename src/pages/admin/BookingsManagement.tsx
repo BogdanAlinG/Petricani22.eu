@@ -183,7 +183,7 @@ export default function BookingsManagement() {
       'Guest Name',
       'Guest Email',
       'Guest Phone',
-      'Accommodation',
+      'Rental',
       'Check-in',
       'Check-out',
       'Guests',
@@ -285,7 +285,7 @@ export default function BookingsManagement() {
               onChange={(e) => setAccommodationFilter(e.target.value)}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
             >
-              <option value="all">All Accommodations</option>
+              <option value="all">All Rentals</option>
               {accommodations.map((acc) => (
                 <option key={acc.id} value={acc.id}>
                   {acc.title_en}
@@ -308,7 +308,7 @@ export default function BookingsManagement() {
                   Guest
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Accommodation
+                  Rental
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Dates

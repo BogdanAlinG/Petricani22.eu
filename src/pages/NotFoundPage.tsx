@@ -14,7 +14,7 @@ export default function NotFoundPage() {
       description: 'Ne pare rau, pagina pe care o cautati nu exista sau a fost mutata.',
       backHome: 'Inapoi Acasa',
       browseMenu: 'Vezi Meniul',
-      browseAccommodations: 'Vezi Cazarea',
+      browseAccommodations: 'Vezi Unitățile',
     },
     EN: {
       title: '404',
@@ -22,7 +22,7 @@ export default function NotFoundPage() {
       description: "Sorry, the page you're looking for doesn't exist or has been moved.",
       backHome: 'Back to Home',
       browseMenu: 'Browse Menu',
-      browseAccommodations: 'Browse Accommodations',
+      browseAccommodations: 'Browse Rentals',
     },
   };
 

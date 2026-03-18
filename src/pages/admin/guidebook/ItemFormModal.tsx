@@ -62,7 +62,7 @@ export default function ItemFormModal({
                 {categories.map((cat) => (
                   <option key={cat.id} value={cat.id}>
                     {cat.title_en}
-                    {cat.accommodation_id ? ' (Unit-specific)' : ' (Global)'}
+                    {cat.accommodation_id ? ' (Rental-specific)' : ' (Global)'}
                   </option>
                 ))}
               </select>
@@ -105,7 +105,7 @@ export default function ItemFormModal({
                 <Lock className="w-4 h-4 text-amber-600 shrink-0" />
                 <div>
                   <p className="text-sm font-medium text-amber-900">Require PIN</p>
-                  <p className="text-xs text-amber-600">Guests must enter the accommodation PIN to view this item</p>
+                  <p className="text-xs text-amber-600">Guests must enter the rental PIN to view this item</p>
                 </div>
               </div>
               <button

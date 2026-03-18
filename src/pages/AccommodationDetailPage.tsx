@@ -26,7 +26,7 @@ import GoogleMap from '../components/GoogleMap';
 
 const content = {
   EN: {
-    back: 'Back to Accommodations',
+    back: 'Back to Rentals',
     beds: 'beds',
     baths: 'baths',
     guests: 'guests',
@@ -39,14 +39,14 @@ const content = {
     checkOut: 'Check-out',
     location: 'Location',
     nearbyPlaces: 'Nearby Places',
-    shareTitle: 'Share this accommodation',
+    shareTitle: 'Share this space',
     saveTitle: 'Save to wishlist',
-    notFound: 'Accommodation not found',
+    notFound: 'Space not found',
     loading: 'Loading...',
     viewOnMap: 'View on map',
   },
   RO: {
-    back: 'Înapoi la Cazări',
+    back: 'Închirieri',
     beds: 'paturi',
     baths: 'băi',
     guests: 'oaspeți',
@@ -59,9 +59,9 @@ const content = {
     checkOut: 'Check-out',
     location: 'Locație',
     nearbyPlaces: 'Locuri din Apropiere',
-    shareTitle: 'Distribuie această cazare',
+    shareTitle: 'Distribuie acest spațiu',
     saveTitle: 'Salvează în lista de dorințe',
-    notFound: 'Cazarea nu a fost găsită',
+    notFound: 'Spațiul nu a fost găsit',
     loading: 'Se încarcă...',
     viewOnMap: 'Vezi pe hartă',
   },

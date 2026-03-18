@@ -14,8 +14,8 @@ export interface SlugPair {
 
 const routes: Record<string, RouteConfig> = {
   home: { ro: '', en: '' },
-  accommodations: { ro: 'cazare', en: 'accommodations' },
-  accommodationDetail: { ro: 'cazare', en: 'accommodations' },
+  accommodations: { ro: 'inchirieri', en: 'rentals' },
+  accommodationDetail: { ro: 'inchirieri', en: 'rentals' },
   book: { ro: 'rezerva', en: 'book' },
   menu: { ro: 'meniu', en: 'menu' },
   menuCategory: { ro: 'meniu/categorie', en: 'menu/category' },
@@ -88,7 +88,7 @@ export function useLocalizedPath() {
 }
 
 const routeMappingToRo: Record<string, string> = {
-  '/accommodations': '/cazare',
+  '/rentals': '/inchirieri',
   '/book': '/rezerva',
   '/menu/category': '/meniu/categorie',
   '/menu/product': '/meniu/produs',
@@ -100,7 +100,7 @@ const routeMappingToRo: Record<string, string> = {
 };
 
 const routeMappingToEn: Record<string, string> = {
-  '/cazare': '/accommodations',
+  '/inchirieri': '/rentals',
   '/rezerva': '/book',
   '/meniu/categorie': '/menu/category',
   '/meniu/produs': '/menu/product',

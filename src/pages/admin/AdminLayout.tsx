@@ -51,10 +51,10 @@ const navItems: NavItem[] = [
     ],
   },
   {
-    label: 'Accommodations',
+    label: 'Rentals',
     icon: <Bed className="w-5 h-5" />,
     children: [
-      { label: 'Units', path: '/admin/accommodations' },
+      { label: 'Rentals', path: '/admin/rentals' },
       { label: 'Bookings', path: '/admin/bookings' },
       { label: 'Availability', path: '/admin/availability' },
       { label: 'Guidebook', path: '/admin/guidebook' },

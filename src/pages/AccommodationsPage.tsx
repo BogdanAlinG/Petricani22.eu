@@ -10,9 +10,9 @@ import type { Accommodation } from '../types/accommodation';
 
 const content = {
   EN: {
-    eyebrow: 'Where to Stay',
-    title: 'Our Accommodations',
-    subtitle: 'Handpicked spaces in the heart of Bucharest, designed for comfort and style.',
+    eyebrow: 'Spaces & Rentals',
+    title: 'Our Rentals',
+    subtitle: 'Unique spaces designed for comfort, creativity, and living.',
     from: 'from',
     perNight: '/ night',
     viewDetails: 'View details',
@@ -21,7 +21,7 @@ const content = {
     guests: 'guests',
     sqm: 'm²',
     featured: 'Featured',
-    noAccommodations: 'No accommodations available at the moment.',
+    noAccommodations: 'No rentals available at the moment.',
     filters: {
       all: 'All',
       rooms: 'Rooms',
@@ -30,9 +30,9 @@ const content = {
     },
   },
   RO: {
-    eyebrow: 'Unde să Stai',
-    title: 'Cazările Noastre',
-    subtitle: 'Spații alese cu grijă în inima Bucureștiului, gândite pentru confort și stil.',
+    eyebrow: 'Spații și Închirieri',
+    title: 'Unitățile Noastre',
+    subtitle: 'Spații unice gândite pentru confort, creativitate și viață.',
     from: 'de la',
     perNight: '/ noapte',
     viewDetails: 'Vezi detalii',
@@ -41,7 +41,7 @@ const content = {
     guests: 'oaspeți',
     sqm: 'm²',
     featured: 'Recomandat',
-    noAccommodations: 'Nu există cazări disponibile momentan.',
+    noAccommodations: 'Nu există unități disponibile momentan.',
     filters: {
       all: 'Toate',
       rooms: 'Camere',

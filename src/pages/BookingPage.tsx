@@ -26,7 +26,7 @@ import { useSlugContext } from '../contexts/SlugContext';
 const content = {
   EN: {
     title: 'Complete Your Booking',
-    back: 'Back to accommodation',
+    back: 'Back to rental',
     tripDetails: 'Your Trip',
     dates: 'Dates',
     guests: 'Guests',
@@ -65,7 +65,7 @@ const content = {
   },
   RO: {
     title: 'Finalizați Rezervarea',
-    back: 'Înapoi la cazare',
+    back: 'Înapoi la închirieri',
     tripDetails: 'Călătoria Dvs.',
     dates: 'Date',
     guests: 'Oaspeți',

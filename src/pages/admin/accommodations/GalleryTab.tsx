@@ -73,7 +73,7 @@ export default function GalleryTab({
         <div>
           <h3 className="font-medium text-gray-900">Gallery Images</h3>
           <p className="text-sm text-gray-500 mt-1">
-            Add images that will be shown in the accommodation gallery. The <strong>Thumbnail image</strong> set in Basic tab will always be shown first.
+            Add images that will be shown in the rental gallery. The <strong>Thumbnail image</strong> set in Basic tab will always be shown first.
           </p>
         </div>
         <button
@@ -90,7 +90,7 @@ export default function GalleryTab({
       {isCreating && (
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
           <p className="text-sm text-amber-800">
-            Please save the accommodation first before adding gallery images.
+            Please save the rental first before adding gallery images.
           </p>
         </div>
       )}
@@ -99,7 +99,7 @@ export default function GalleryTab({
         <div className="border-2 border-dashed border-gray-200 rounded-lg p-8 text-center">
           <ImageIcon className="w-12 h-12 mx-auto mb-3 text-gray-300" />
           <p className="text-gray-500">No gallery images yet</p>
-          <p className="text-sm text-gray-400 mt-1">Add images to create a gallery for this accommodation</p>
+          <p className="text-sm text-gray-400 mt-1">Add images to create a gallery for this rental</p>
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">

@@ -1266,7 +1266,7 @@ export default function ArticlesManagement() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Unit Price Calculator
+                    Rental Price Calculator
                   </label>
                   <select
                     value={editingArticle ? (editingArticle.unit_calculator_slug || '') : (newArticle.unit_calculator_slug || '')}

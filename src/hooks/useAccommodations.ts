@@ -33,7 +33,7 @@ export function useAccommodations() {
       setError(null);
     } catch (err) {
       console.error('Error fetching accommodations:', err);
-      setError('Failed to load accommodations');
+      setError('Failed to load rentals');
     } finally {
       setLoading(false);
     }
@@ -68,7 +68,7 @@ export function useAccommodation(slug: string) {
 
         if (accError) throw accError;
         if (!accData) {
-          setError('Accommodation not found');
+          setError('Space not found');
           return;
         }
 
@@ -97,7 +97,7 @@ export function useAccommodation(slug: string) {
         setError(null);
       } catch (err) {
         console.error('Error fetching accommodation:', err);
-        setError('Failed to load accommodation');
+        setError('Failed to load rental details');
       } finally {
         setLoading(false);
       }

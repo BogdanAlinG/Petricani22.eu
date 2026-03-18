@@ -353,7 +353,7 @@ export default function GuidebookManagement() {
                         <span className="font-semibold text-gray-900 text-sm">{cat.title_en}</span>
                         {cat.accommodation_id ? (
                           <span className="px-2 py-0.5 text-xs bg-amber-100 text-amber-700 rounded-full">
-                            {accommodations.find((a) => a.id === cat.accommodation_id)?.title_en || 'Unit'}
+                            {accommodations.find((a) => a.id === cat.accommodation_id)?.title_en || 'Rental'}
                           </span>
                         ) : (
                           <span className="px-2 py-0.5 text-xs bg-blue-100 text-blue-700 rounded-full">

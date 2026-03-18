@@ -66,7 +66,7 @@ export default function AccommodationFormModal({
       <div className="bg-white rounded-xl w-full max-w-4xl my-8 shadow-xl">
         <div className="sticky top-0 flex items-center justify-between p-4 border-b bg-white rounded-t-xl z-10">
           <h2 className="text-xl font-semibold">
-            {isCreating ? 'Add Accommodation' : 'Edit Accommodation'}
+            {isCreating ? 'Add Rental' : 'Edit Rental'}
           </h2>
           <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
             <X className="w-5 h-5" />
@@ -149,7 +149,7 @@ function BasicTab({
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Slug EN (URL identifier)</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Slug EN (Rental identifier)</label>
           <input
             type="text"
             value={editing.slug}
@@ -159,7 +159,7 @@ function BasicTab({
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Slug RO (URL identifier)</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Slug RO (Rental identifier)</label>
           <input
             type="text"
             value={editing.slug_ro}
@@ -172,7 +172,7 @@ function BasicTab({
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Unit Type</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Rental Type</label>
           <select
             value={editing.unit_type}
             onChange={(e) => onFieldChange({ unit_type: e.target.value })}

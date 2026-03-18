@@ -32,14 +32,14 @@ export default function AccommodationTable({
     return (
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
         <Bed className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-        <h3 className="text-lg font-medium text-gray-900 mb-2">No accommodations yet</h3>
-        <p className="text-gray-500 mb-6">Add your first accommodation to get started</p>
+        <h3 className="text-lg font-medium text-gray-900 mb-2">No rentals yet</h3>
+        <p className="text-gray-500 mb-6">Add your first rental to get started</p>
         <button
           onClick={onCreate}
           className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors"
         >
           <Plus className="w-5 h-5" />
-          Add Accommodation
+          Add Rental
         </button>
       </div>
     );
@@ -52,7 +52,7 @@ export default function AccommodationTable({
           <thead className="bg-gray-50 border-b">
             <tr>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase w-12">#</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Accommodation</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rental</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Specs</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price/Night</th>
