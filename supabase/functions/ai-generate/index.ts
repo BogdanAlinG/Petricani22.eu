@@ -150,7 +150,7 @@ Deno.serve(async (req: Request) => {
       ? `${BASE_SYSTEM_PROMPT}\n\nIMPORTANT FACTS — always follow these:\n${aiPointers}`
       : BASE_SYSTEM_PROMPT;
 
-    const userPrompt = promptFn({ type, language, context, existingContent, category });
+    const userPrompt = promptFn({ ...body });
 
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
