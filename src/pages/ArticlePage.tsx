@@ -20,6 +20,26 @@ const ArticlePage: React.FC = () => {
   const [article, setArticle] = useState<Article | null>(null);
   const [related, setRelated] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
+  const [scrollProgress, setScrollProgress] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const element = document.documentElement;
+      const totalHeight = element.scrollHeight - element.clientHeight;
+      const windowScrollTop = window.scrollY || element.scrollTop;
+      
+      if (totalHeight <= 0) {
+        setScrollProgress(0);
+        return;
+      }
+      
+      const progress = (windowScrollTop / totalHeight) * 100;
+      setScrollProgress(progress);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   useEffect(() => {
     const loadArticle = async () => {
@@ -77,6 +97,11 @@ const ArticlePage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white">
+      {/* Progress Bar */}
+      <div 
+        className="fixed top-0 left-0 h-1 bg-primary z-[60] transition-all duration-150 ease-out"
+        style={{ width: `${scrollProgress}%` }}
+      />
       <section className="relative h-[70vh] min-h-[480px] overflow-hidden">
         <img
           src={article.image}

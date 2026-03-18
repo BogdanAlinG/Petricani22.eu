@@ -12,6 +12,8 @@ export type AIGenerateType =
   | 'block_title'
   | 'block_description'
   | 'translate'
+  | 'article_slug'
+  | 'article_tags'
   | 'product_short_description'
   | 'product_full_description';
 
@@ -21,6 +23,7 @@ interface GenerateOptions {
   context?: string;
   existingContent?: string;
   category?: string;
+  keywords?: string;
 }
 
 export function useAIGenerate() {

@@ -37,6 +37,7 @@ interface Article {
   is_featured: boolean;
   is_visible: boolean;
   tags: string[];
+  keywords: string;
   display_order: number;
 }
 
@@ -77,7 +78,17 @@ export default function ArticlesManagement() {
     published_at: new Date().toISOString().split('T')[0],
     is_featured: false,
     tags: [] as string[],
+    keywords: '',
   });
+
+  const calculateReadTime = (content: string) => {
+    const wordsPerMinute = 200;
+    const text = content.replace(/<[^>]*>/g, '');
+    const wordCount = text.trim().split(/\s+/).filter(w => w.length > 0).length;
+    if (wordCount === 0) return '1 min';
+    const minutes = Math.ceil(wordCount / wordsPerMinute);
+    return `${minutes} min`;
+  };
   const [tagInput, setTagInput] = useState('');
 
   useEffect(() => {
@@ -152,6 +163,7 @@ export default function ArticlesManagement() {
         published_at: new Date().toISOString().split('T')[0],
         is_featured: false,
         tags: [],
+        keywords: '',
       });
       setTagInput('');
     } catch (error) {
@@ -325,6 +337,7 @@ export default function ArticlesManagement() {
       language: lang,
       category: article?.category,
       context: context || undefined,
+      keywords: article?.keywords,
     });
 
     if (!result) {
@@ -377,11 +390,72 @@ export default function ArticlesManagement() {
     const targetKey = `${field}_${targetLang}`;
     if (isEditing && editingArticle) {
       setEditingArticle({ ...editingArticle, [targetKey]: result });
+      
+      // Auto-update read time if content was translated
+      if (field === 'content') {
+        const readTime = calculateReadTime(result);
+        const readTimeKey = `read_time_${targetLang}`;
+        setEditingArticle(prev => prev ? { ...prev, [readTimeKey]: readTime } : null);
+      }
     } else {
       setNewArticle({ ...newArticle, [targetKey]: result });
+      
+      if (field === 'content') {
+        const readTime = calculateReadTime(result);
+        const readTimeKey = `read_time_${targetLang}`;
+        setNewArticle(prev => ({ ...prev, [readTimeKey]: readTime }));
+      }
     }
 
     void sourceKey;
+  };
+
+  const aiGenerateSlug = async () => {
+    const article = editingArticle || newArticle;
+    const context = activeTab === 'ro' ? article.title_ro : article.title_en;
+    
+    const result = await generate('article-slug', {
+      type: 'article_slug',
+      language: activeTab,
+      context: context || undefined,
+      keywords: article.keywords,
+    });
+
+    if (result) {
+      if (editingArticle) {
+        setEditingArticle({ ...editingArticle, id: result });
+      } else {
+        setNewArticle({ ...newArticle, id: result });
+      }
+    } else {
+      toast.error('Slug generation failed');
+    }
+  };
+
+  const aiGenerateTags = async () => {
+    const article = editingArticle || newArticle;
+    const context = `${activeTab === 'ro' ? article.title_ro : article.title_en}\n${activeTab === 'ro' ? article.excerpt_ro : article.excerpt_en}`;
+    
+    const result = await generate('article-tags', {
+      type: 'article_tags',
+      language: activeTab,
+      context,
+      keywords: article.keywords,
+    });
+
+    if (result) {
+      const generatedTags = result.split(',').map(t => t.trim()).filter(t => t.length > 0);
+      if (editingArticle) {
+        const uniqueTags = Array.from(new Set([...editingArticle.tags, ...generatedTags]));
+        setEditingArticle({ ...editingArticle, tags: uniqueTags });
+      } else {
+        const uniqueTags = Array.from(new Set([...newArticle.tags, ...generatedTags]));
+        setNewArticle({ ...newArticle, tags: uniqueTags });
+      }
+      toast.success('Tags generated successfully');
+    } else {
+      toast.error('Tags generation failed');
+    }
   };
 
   const filteredArticles = articles.filter((article) => {
@@ -634,9 +708,17 @@ export default function ArticlesManagement() {
 
               {!editingArticle && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Article ID (URL slug)
-                  </label>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Article ID (URL slug)
+                    </label>
+                    <AIGenerateButton
+                      id="slug-gen"
+                      generating={generating}
+                      onClick={aiGenerateSlug}
+                      label="Generate Slug"
+                    />
+                  </div>
                   <input
                     type="text"
                     value={newArticle.id}
@@ -649,6 +731,26 @@ export default function ArticlesManagement() {
                   </p>
                 </div>
               )}
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Promotion Keywords (Google Adwords)
+                </label>
+                <input
+                  type="text"
+                  value={editingArticle ? editingArticle.keywords : newArticle.keywords}
+                  onChange={(e) =>
+                    editingArticle
+                      ? setEditingArticle({ ...editingArticle, keywords: e.target.value })
+                      : setNewArticle({ ...newArticle, keywords: e.target.value })
+                  }
+                  placeholder="e.g., modern offices, event garden, Bucharest apartments"
+                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                />
+                <p className="text-sm text-gray-500 mt-1">
+                  AI will prioritize these keywords when generating content, slugs, and tags
+                </p>
+              </div>
 
               {activeTab === 'ro' ? (
                 <>
@@ -734,8 +836,16 @@ export default function ArticlesManagement() {
                       value={editingArticle ? editingArticle.content_ro : newArticle.content_ro}
                       onChange={(value) =>
                         editingArticle
-                          ? setEditingArticle({ ...editingArticle, content_ro: value })
-                          : setNewArticle({ ...newArticle, content_ro: value })
+                          ? setEditingArticle({ 
+                            ...editingArticle, 
+                            content_ro: value,
+                            read_time_ro: calculateReadTime(value)
+                          })
+                        : setNewArticle({ 
+                            ...newArticle, 
+                            content_ro: value,
+                            read_time_ro: calculateReadTime(value)
+                          })
                       }
                     />
                   </div>
@@ -841,8 +951,16 @@ export default function ArticlesManagement() {
                       value={editingArticle ? editingArticle.content_en : newArticle.content_en}
                       onChange={(value) =>
                         editingArticle
-                          ? setEditingArticle({ ...editingArticle, content_en: value })
-                          : setNewArticle({ ...newArticle, content_en: value })
+                          ? setEditingArticle({ 
+                            ...editingArticle, 
+                            content_en: value,
+                            read_time_en: calculateReadTime(value)
+                          })
+                        : setNewArticle({ 
+                            ...newArticle, 
+                            content_en: value,
+                            read_time_en: calculateReadTime(value)
+                          })
                       }
                     />
                   </div>
@@ -938,7 +1056,15 @@ export default function ArticlesManagement() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Tags</label>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-gray-700">Tags</label>
+                  <AIGenerateButton
+                    id="tags-gen"
+                    generating={generating}
+                    onClick={aiGenerateTags}
+                    label="Generate Tags with AI"
+                  />
+                </div>
                 <div className="flex gap-2 mb-2">
                   <input
                     type="text"
