@@ -206,7 +206,7 @@ const ArticlePage: React.FC = () => {
                   {related.length > 0 ? related.map((rel) => (
                     <Link
                       key={rel.id}
-                      to={getArticlePath(rel.id)}
+                      to={getArticlePath({ slug: rel.slug_en, slug_ro: rel.slug_ro })}
                       className="group flex gap-3 items-start"
                     >
                       <div className="w-16 h-16 rounded-xl overflow-hidden shrink-0">

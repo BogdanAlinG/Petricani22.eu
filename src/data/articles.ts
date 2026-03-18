@@ -23,6 +23,8 @@ export interface Article {
   publishedAt: string;
   featured: boolean;
   tags: string[];
+  slug_en: string;
+  slug_ro: string;
 }
 
 interface DBArticle {
@@ -41,6 +43,8 @@ interface DBArticle {
   is_featured: boolean;
   is_visible: boolean;
   tags: string[];
+  slug_ro: string;
+  slug_en: string;
 }
 
 const transformDBArticle = async (dbArticle: DBArticle): Promise<Article> => {
@@ -81,10 +85,12 @@ const transformDBArticle = async (dbArticle: DBArticle): Promise<Article> => {
     publishedAt: dbArticle.published_at,
     featured: dbArticle.is_featured,
     tags: dbArticle.tags,
+    slug_en: dbArticle.slug_en,
+    slug_ro: dbArticle.slug_ro,
   };
 };
 
-export const getFeaturedArticles = async (language: 'RO' | 'EN'): Promise<Article[]> => {
+export const getFeaturedArticles = async (_language: 'RO' | 'EN'): Promise<Article[]> => {
   try {
     const { data, error } = await supabase
       .from('articles')
@@ -96,7 +102,7 @@ export const getFeaturedArticles = async (language: 'RO' | 'EN'): Promise<Articl
     if (error) throw error;
 
     const articles = await Promise.all(
-      (data || []).map((dbArticle) => transformDBArticle(dbArticle))
+      ((data as DBArticle[]) || []).map((dbArticle: DBArticle) => transformDBArticle(dbArticle))
     );
 
     return articles;
@@ -108,7 +114,7 @@ export const getFeaturedArticles = async (language: 'RO' | 'EN'): Promise<Articl
 
 export const getArticlesByCategory = async (
   category: string,
-  language: 'RO' | 'EN'
+  _language: 'RO' | 'EN'
 ): Promise<Article[]> => {
   try {
     const { data, error } = await supabase
@@ -121,7 +127,7 @@ export const getArticlesByCategory = async (
     if (error) throw error;
 
     const articles = await Promise.all(
-      (data || []).map((dbArticle) => transformDBArticle(dbArticle))
+      ((data as DBArticle[]) || []).map((dbArticle: DBArticle) => transformDBArticle(dbArticle))
     );
 
     return articles;
@@ -136,14 +142,14 @@ export const getArticleById = async (id: string): Promise<Article | null> => {
     const { data, error } = await supabase
       .from('articles')
       .select('*')
-      .eq('id', id)
+      .or(`slug_ro.eq."${id}",slug_en.eq."${id}",id.eq."${id}"`)
       .eq('is_visible', true)
       .maybeSingle();
 
     if (error) throw error;
     if (!data) return null;
 
-    return await transformDBArticle(data);
+    return await transformDBArticle(data as DBArticle);
   } catch (error) {
     console.error('Error fetching article:', error);
     return null;
@@ -159,7 +165,7 @@ export const getAllCategories = async (): Promise<string[]> => {
 
     if (error) throw error;
 
-    const categories = [...new Set((data || []).map((article) => article.category))];
+    const categories = [...new Set(((data || []) as {category: string}[]).map((article) => article.category))];
     return categories;
   } catch (error) {
     console.error('Error fetching categories:', error);

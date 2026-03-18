@@ -284,7 +284,7 @@ const InspirationPage: React.FC = () => {
               {/* Featured article — large card */}
               {featuredArticle && (
                 <Link
-                  to={getArticlePath(featuredArticle.id)}
+                  to={getArticlePath({ slug: featuredArticle.slug_en, slug_ro: featuredArticle.slug_ro })}
                   className="group grid grid-cols-1 lg:grid-cols-2 rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-shadow duration-500 bg-gray-950"
                 >
                   <div className="relative overflow-hidden aspect-[16/10] lg:aspect-auto">
@@ -322,7 +322,7 @@ const InspirationPage: React.FC = () => {
                   {secondaryArticles.map((article) => (
                     <Link
                       key={article.id}
-                      to={getArticlePath(article.id)}
+                      to={getArticlePath({ slug: article.slug_en, slug_ro: article.slug_ro })}
                       className="group rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300 bg-white border border-gray-100"
                     >
                       <div className="relative overflow-hidden aspect-[16/9]">
@@ -362,7 +362,7 @@ const InspirationPage: React.FC = () => {
                   {remainingArticles.map((article) => (
                     <Link
                       key={article.id}
-                      to={getArticlePath(article.id)}
+                      to={getArticlePath({ slug: article.slug_en, slug_ro: article.slug_ro })}
                       className="group flex gap-5 py-6 items-start hover:bg-gray-50 -mx-4 px-4 rounded-xl transition-colors"
                     >
                       <div className="w-24 h-24 sm:w-32 sm:h-24 rounded-xl overflow-hidden shrink-0">

@@ -40,6 +40,8 @@ interface Article {
   keywords: string;
   ai_direction: string;
   display_order: number;
+  slug_ro: string;
+  slug_en: string;
 }
 
 interface MediaItem {
@@ -81,6 +83,8 @@ export default function ArticlesManagement() {
     tags: [] as string[],
     keywords: '',
     ai_direction: '',
+    slug_ro: '',
+    slug_en: '',
   });
 
   const calculateReadTime = (content: string) => {
@@ -131,16 +135,20 @@ export default function ArticlesManagement() {
 
 
   const handleAddArticle = async () => {
-    if (!newArticle.id.trim() || !newArticle.title_ro.trim() || !newArticle.title_en.trim()) {
-      toast.warning('Please fill in the ID and titles in both languages');
+    if (!newArticle.slug_ro.trim() || !newArticle.slug_en.trim() || !newArticle.title_ro.trim() || !newArticle.title_en.trim()) {
+      toast.warning('Please fill in the slugs and titles in both languages');
       return;
     }
+
+    // Use slug_en as the initial ID for backward compatibility or generate a unique one
+    const articleId = newArticle.slug_en.trim();
 
     try {
       const { data, error } = await supabase
         .from('articles')
         .insert({
           ...newArticle,
+          id: articleId,
           display_order: articles.length,
         })
         .select()
@@ -167,6 +175,8 @@ export default function ArticlesManagement() {
         tags: [],
         keywords: '',
         ai_direction: '',
+        slug_ro: '',
+        slug_en: '',
       });
       setTagInput('');
     } catch (error) {
@@ -199,6 +209,8 @@ export default function ArticlesManagement() {
           tags: editingArticle.tags,
           keywords: editingArticle.keywords,
           ai_direction: editingArticle.ai_direction,
+          slug_ro: editingArticle.slug_ro,
+          slug_en: editingArticle.slug_en,
         })
         .eq('id', editingArticle.id);
 
@@ -430,9 +442,11 @@ export default function ArticlesManagement() {
 
     if (result) {
       if (editingArticle) {
-        setEditingArticle({ ...editingArticle, id: result });
+        const slugKey = activeTab === 'ro' ? 'slug_ro' : 'slug_en';
+        setEditingArticle({ ...editingArticle, [slugKey]: result });
       } else {
-        setNewArticle({ ...newArticle, id: result });
+        const slugKey = activeTab === 'ro' ? 'slug_ro' : 'slug_en';
+        setNewArticle({ ...newArticle, [slugKey]: result });
       }
     } else {
       toast.error('Slug generation failed');
@@ -714,31 +728,7 @@ export default function ArticlesManagement() {
                 </button>
               </div>
 
-              {!editingArticle && (
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <label className="block text-sm font-medium text-gray-700">
-                      Article ID (URL slug)
-                    </label>
-                    <AIGenerateButton
-                      id="slug-gen"
-                      generating={generating}
-                      onClick={aiGenerateSlug}
-                      label="Generate Slug"
-                    />
-                  </div>
-                  <input
-                    type="text"
-                    value={newArticle.id}
-                    onChange={(e) => setNewArticle({ ...newArticle, id: e.target.value })}
-                    placeholder="e.g., top-5-petreceri-curte"
-                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                  />
-                  <p className="text-sm text-gray-500 mt-1">
-                    Use lowercase letters, numbers, and hyphens only
-                  </p>
-                </div>
-              )}
+              {/* Slugs are now in tabs below */}
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -782,6 +772,29 @@ export default function ArticlesManagement() {
 
               {activeTab === 'ro' ? (
                 <>
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-sm font-medium text-gray-700">URL Slug (Romanian)</label>
+                      <AIGenerateButton
+                        id="slug-ro"
+                        generating={generating}
+                        onClick={aiGenerateSlug}
+                        label="Generate Slug"
+                      />
+                    </div>
+                    <input
+                      type="text"
+                      value={editingArticle ? editingArticle.slug_ro : newArticle.slug_ro}
+                      onChange={(e) =>
+                        editingArticle
+                          ? setEditingArticle({ ...editingArticle, slug_ro: e.target.value })
+                          : setNewArticle({ ...newArticle, slug_ro: e.target.value })
+                      }
+                      placeholder="e.g., top-5-petreceri-curte"
+                      className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent mb-4"
+                    />
+                  </div>
+
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <label className="block text-sm font-medium text-gray-700">Title (Romanian)</label>
@@ -897,6 +910,29 @@ export default function ArticlesManagement() {
                 </>
               ) : (
                 <>
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-sm font-medium text-gray-700">URL Slug (English)</label>
+                      <AIGenerateButton
+                        id="slug-en"
+                        generating={generating}
+                        onClick={aiGenerateSlug}
+                        label="Generate Slug"
+                      />
+                    </div>
+                    <input
+                      type="text"
+                      value={editingArticle ? editingArticle.slug_en : newArticle.slug_en}
+                      onChange={(e) =>
+                        editingArticle
+                          ? setEditingArticle({ ...editingArticle, slug_en: e.target.value })
+                          : setNewArticle({ ...newArticle, slug_en: e.target.value })
+                      }
+                      placeholder="e.g., top-5-garden-parties"
+                      className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent mb-4"
+                    />
+                  </div>
+
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <label className="block text-sm font-medium text-gray-700">Title (English)</label>

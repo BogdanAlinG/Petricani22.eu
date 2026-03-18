@@ -65,7 +65,7 @@ export function useLocalizedPath() {
 
   const getCategoryPath = (slugs: SlugPair) => getPath('menuCategory', slugs);
   const getProductPath = (slugs: SlugPair) => getPath('menuProduct', slugs);
-  const getArticlePath = (id: string) => getPath('inspiration', id);
+  const getArticlePath = (param: string | SlugPair) => getPath('inspiration', param);
   const getOrderConfirmationPath = (orderNumber: string) => getPath('orderConfirmation', orderNumber);
   const getAccommodationPath = (slugs: SlugPair) => getPath('accommodationDetail', slugs);
   const getBookingPath = (slugs: SlugPair) => getPath('book', slugs);
