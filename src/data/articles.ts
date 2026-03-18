@@ -115,6 +115,27 @@ export const getFeaturedArticles = async (_language: 'RO' | 'EN'): Promise<Artic
   }
 };
 
+export const getAllVisibleArticles = async (): Promise<Article[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('articles')
+      .select('*')
+      .eq('is_visible', true)
+      .order('published_at', { ascending: false });
+
+    if (error) throw error;
+
+    const articles = await Promise.all(
+      ((data as DBArticle[]) || []).map((dbArticle: DBArticle) => transformDBArticle(dbArticle))
+    );
+
+    return articles;
+  } catch (error) {
+    console.error('Error fetching visible articles:', error);
+    return [];
+  }
+};
+
 export const getArticlesByCategory = async (
   category: string,
   _language: 'RO' | 'EN'

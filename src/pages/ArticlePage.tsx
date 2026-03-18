@@ -4,7 +4,7 @@ import { useNavigation } from '../contexts/NavigationContext';
 import { ArrowLeft, Clock, Tag, Calendar, ChevronRight } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useLocalizedPath } from '../hooks/useLocalizedPath';
-import { getArticleById, getFeaturedArticles, Article } from '../data/articles';
+import { getArticleById, getAllVisibleArticles, Article } from '../data/articles';
 import UnitPriceCalculator from '../components/UnitPriceCalculator';
 
 const ArticlePage: React.FC = () => {
@@ -48,7 +48,7 @@ const ArticlePage: React.FC = () => {
       setLoading(true);
       const [fetchedArticle, allArticles] = await Promise.all([
         getArticleById(id),
-        getFeaturedArticles(language),
+        getAllVisibleArticles(),
       ]);
       setArticle(fetchedArticle);
       setRelated(allArticles.filter((a) => a.id !== id).slice(0, 3));

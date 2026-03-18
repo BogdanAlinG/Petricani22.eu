@@ -4,7 +4,7 @@ import { Home, Users, Briefcase, TreePine, Settings, Star, ArrowRight, LucideIco
 import ContactForm from '../components/ContactForm';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useLocalizedPath } from '../hooks/useLocalizedPath';
-import { getFeaturedArticles, getAllCategories, Article } from '../data/articles';
+import { getAllVisibleArticles, getAllCategories, Article } from '../data/articles';
 import { usePageSection } from '../hooks/useCMS';
 
 const ICON_MAP: Record<string, LucideIcon> = {
@@ -31,10 +31,18 @@ const InspirationPage: React.FC = () => {
     const loadData = async () => {
       setArticlesLoading(true);
       const [fetchedArticles, fetchedCategories] = await Promise.all([
-        getFeaturedArticles(language),
+        getAllVisibleArticles(),
         getAllCategories(),
       ]);
-      setArticles(fetchedArticles);
+      
+      // Sort: featured first, then by date
+      const sortedArticles = [...fetchedArticles].sort((a, b) => {
+        if (a.featured && !b.featured) return -1;
+        if (!a.featured && b.featured) return 1;
+        return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
+      });
+      
+      setArticles(sortedArticles);
       setCategories(fetchedCategories);
       setArticlesLoading(false);
     };
