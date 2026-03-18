@@ -88,7 +88,7 @@ export default function AccommodationsManagement() {
       .from('accommodation_amenities')
       .select('amenity_id')
       .eq('accommodation_id', accommodationId);
-    setSelectedAmenities((data || []).map((a) => a.amenity_id));
+    setSelectedAmenities((data || []).map((a: { amenity_id: string }) => a.amenity_id));
   };
 
   const fetchGalleryImages = async (accommodationId: string) => {
