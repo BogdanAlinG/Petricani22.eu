@@ -165,33 +165,35 @@ const ArticlePage: React.FC = () => {
               </div>
             )}
 
-            <div className="mt-14 rounded-2xl overflow-hidden border border-gray-100 shadow-sm">
-              <div className="bg-primary px-8 py-6">
-                <h3 className="text-xl font-bold text-white">
-                  {t('Te-ai inspirat? Hai sa discutam!', "Feeling inspired? Let's talk!")}
-                </h3>
-                <p className="text-white/80 mt-1 text-sm leading-relaxed">
-                  {t(
-                    'Contacteaza-ne pentru a afla cum poti folosi spatiul de la Petricani 22.',
-                    'Contact us to learn how you can use the Petricani 22 space.'
-                  )}
-                </p>
+            {!article.unit_calculator_slug && (
+              <div className="mt-14 rounded-2xl overflow-hidden border border-gray-100 shadow-sm">
+                <div className="bg-primary px-8 py-6">
+                  <h3 className="text-xl font-bold text-white">
+                    {t('Te-ai inspirat? Hai sa discutam!', "Feeling inspired? Let's talk!")}
+                  </h3>
+                  <p className="text-white/80 mt-1 text-sm leading-relaxed">
+                    {t(
+                      'Contacteaza-ne pentru a afla cum poti folosi spatiul de la Petricani 22.',
+                      'Contact us to learn how you can use the Petricani 22 space.'
+                    )}
+                  </p>
+                </div>
+                <div className="bg-gray-50 px-8 py-5 flex flex-col sm:flex-row gap-3">
+                  <Link
+                    to={`${homePath}#contact`}
+                    className="inline-flex items-center justify-center bg-primary text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-primary-dark transition-colors text-sm"
+                  >
+                    {t('Contacteaza-ne', 'Contact Us')}
+                  </Link>
+                  <button
+                    onClick={handleBack}
+                    className="inline-flex items-center justify-center bg-white text-gray-700 px-5 py-2.5 rounded-lg font-semibold hover:bg-gray-100 transition-colors border border-gray-200 text-sm"
+                  >
+                    {t('Mai multe idei', 'More ideas')}
+                  </button>
+                </div>
               </div>
-              <div className="bg-gray-50 px-8 py-5 flex flex-col sm:flex-row gap-3">
-                <Link
-                  to={`${homePath}#contact`}
-                  className="inline-flex items-center justify-center bg-primary text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-primary-dark transition-colors text-sm"
-                >
-                  {t('Contacteaza-ne', 'Contact Us')}
-                </Link>
-                <button
-                  onClick={handleBack}
-                  className="inline-flex items-center justify-center bg-white text-gray-700 px-5 py-2.5 rounded-lg font-semibold hover:bg-gray-100 transition-colors border border-gray-200 text-sm"
-                >
-                  {t('Mai multe idei', 'More ideas')}
-                </button>
-              </div>
-            </div>
+            )}
         </article>
       </div>
     </div>
