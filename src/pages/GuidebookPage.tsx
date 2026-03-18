@@ -6,6 +6,7 @@ import {
   Lock, Eye, EyeOff, KeyRound,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import DOMPurify from 'dompurify';
 import GuidebookIcon from './admin/guidebook/GuidebookIcon';
 import type { GuidebookCategory, GuidebookItem } from './admin/guidebook/guidebook.types';
 
@@ -108,7 +109,7 @@ function ItemCard({ item, lang, isGlobal, pinUnlocked, onUnlockRequest }: ItemCa
           content && (
             <div
               className="text-sm text-stone-600 leading-relaxed"
-              dangerouslySetInnerHTML={{ __html: renderMarkdown(content) }}
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(renderMarkdown(content)) }}
             />
           )
         )}

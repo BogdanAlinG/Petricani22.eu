@@ -5,6 +5,7 @@ import { ArrowLeft, Clock, Tag, Calendar } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useLocalizedPath } from '../hooks/useLocalizedPath';
 import { getArticleById, Article } from '../data/articles';
+import DOMPurify from 'dompurify';
 import UnitPriceCalculator from '../components/UnitPriceCalculator';
 
 const ArticlePage: React.FC = () => {
@@ -142,7 +143,7 @@ const ArticlePage: React.FC = () => {
       <div className="max-w-4xl mx-auto px-4 py-14 lg:py-20">
         <article className="w-full">
             <div className="article-body">
-              <div dangerouslySetInnerHTML={{ __html: article.content[language] }} />
+              <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(article.content[language]) }} />
             </div>
 
             {article.unit_calculator_slug && (

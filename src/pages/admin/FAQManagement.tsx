@@ -18,6 +18,7 @@ import AIGenerateButton from '../../components/admin/AIGenerateButton';
 import { useToast } from '../../components/ui/Toast';
 import { useConfirm } from '../../components/ui/ConfirmDialog';
 import { useAIGenerate } from '../../hooks/useAIGenerate';
+import DOMPurify from 'dompurify';
 
 interface FAQ {
   id: string;
@@ -481,7 +482,7 @@ export default function FAQManagement() {
                 <div className="border-t px-4 py-3 bg-gray-50">
                   <div
                     className="prose prose-sm max-w-none text-gray-600"
-                    dangerouslySetInnerHTML={{ __html: faq.answer_en }}
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(faq.answer_en) }}
                   />
                 </div>
               )}

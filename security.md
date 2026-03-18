@@ -39,11 +39,10 @@ Row Level Security (RLS) is fully enabled across the `public` schema. Following 
 
 ## 4. Unsanitised Inputs (XSS Risks)
 
-**Status: Low Risk / Mitigated** 🟡
+**Status: Secure** 🟢
 
-A scan for `dangerouslySetInnerHTML` identified three usages:
-1. **`FAQManagement.tsx` & `ArticlePage.tsx`**: Render raw HTML payloads fetched directly from the Supabase database. Since RLS ensures only fully authenticated Administrators can `INSERT` or `UPDATE` these tables, the risk of a malicious actor injecting a Stored XSS payload is effectively mitigated by trust boundaries.
-2. **`GuidebookPage.tsx`**: Renders markdown content via `dangerouslySetInnerHTML={{ __html: renderMarkdown(content) }}`. The `renderMarkdown` function was inspected and correctly sanitises characters by forcing `.replace(/</g, '&lt;')` and `.replace(/>/g, '&gt;')` at the very beginning of the pipeline. This successfully neutralises standard XSS tags (like `<script>`) before safe tags (like `<strong>`) are injected by the parser. 
+A scan for `dangerouslySetInnerHTML` identified three usages, which have now all been mitigated using professional DOM cleansing:
+1. **`FAQManagement.tsx`, `ArticlePage.tsx`, & `GuidebookPage.tsx`**: All raw HTML and Markdown payloads are now explicitly wrapped with `DOMPurify.sanitize(...)` before injection into the React DOM. This robustly isolates the application from Stored XSS or HTML injection attacks regardless of the origin of the payload. 
 
 ## Summary
 The `Petricani22.eu` codebase exhibits a strong security posture following recent hardening efforts. Authentication boundaries align with standard best practices, and Data/PII segregation via RLS is firmly enforced. No critical vulnerabilities are currently active.
