@@ -87,6 +87,7 @@ export default function ArticlesManagement() {
     ai_direction: '',
     slug_ro: '',
     slug_en: '',
+    is_visible: true,
     unit_calculator_slug: null as string | null,
   });
 
@@ -191,6 +192,7 @@ export default function ArticlesManagement() {
         ai_direction: '',
         slug_ro: '',
         slug_en: '',
+        is_visible: true,
         unit_calculator_slug: null,
       });
       setTagInput('');

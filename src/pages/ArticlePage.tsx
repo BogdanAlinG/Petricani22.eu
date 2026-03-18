@@ -1,15 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useNavigation } from '../contexts/NavigationContext';
-import { ArrowLeft, Clock, Tag, Calendar, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Clock, Tag, Calendar } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useLocalizedPath } from '../hooks/useLocalizedPath';
-import { getArticleById, getAllVisibleArticles, Article } from '../data/articles';
+import { getArticleById, Article } from '../data/articles';
 import UnitPriceCalculator from '../components/UnitPriceCalculator';
 
 const ArticlePage: React.FC = () => {
   const { language, t } = useLanguage();
-  const { inspirationPath, homePath, getArticlePath } = useLocalizedPath();
+  const { inspirationPath, homePath } = useLocalizedPath();
   const { id } = useParams<{ id: string }>();
   const { goBack } = useNavigation();
   const navigate = useNavigate();
@@ -19,7 +19,6 @@ const ArticlePage: React.FC = () => {
     navigate(inspirationPath);
   };
   const [article, setArticle] = useState<Article | null>(null);
-  const [related, setRelated] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [scrollProgress, setScrollProgress] = useState(0);
 
@@ -46,12 +45,8 @@ const ArticlePage: React.FC = () => {
     const loadArticle = async () => {
       if (!id) { setLoading(false); return; }
       setLoading(true);
-      const [fetchedArticle, allArticles] = await Promise.all([
-        getArticleById(id),
-        getAllVisibleArticles(),
-      ]);
+      const fetchedArticle = await getArticleById(id);
       setArticle(fetchedArticle);
-      setRelated(allArticles.filter((a) => a.id !== id).slice(0, 3));
       setLoading(false);
     };
     loadArticle();
@@ -144,10 +139,8 @@ const ArticlePage: React.FC = () => {
         </div>
       </section>
 
-      <div className="max-w-5xl mx-auto px-4 py-14 lg:py-20">
-        <div className="flex flex-col lg:flex-row gap-14">
-
-          <article className="flex-1 min-w-0">
+      <div className="max-w-4xl mx-auto px-4 py-14 lg:py-20">
+        <article className="w-full">
             <div className="article-body">
               <div dangerouslySetInnerHTML={{ __html: article.content[language] }} />
             </div>
@@ -199,55 +192,7 @@ const ArticlePage: React.FC = () => {
                 </button>
               </div>
             </div>
-          </article>
-
-          <aside className="lg:w-72 shrink-0 space-y-8">
-            <div className="sticky top-24">
-              <div className="bg-gray-50 rounded-2xl p-6">
-                <h4 className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-5">
-                  {t('Mai citeste si', 'More to read')}
-                </h4>
-                <div className="space-y-5">
-                  {related.length > 0 ? related.map((rel) => (
-                    <Link
-                      key={rel.id}
-                      to={getArticlePath({ slug: rel.slug_en, slug_ro: rel.slug_ro })}
-                      className="group flex gap-3 items-start"
-                    >
-                      <div className="w-16 h-16 rounded-xl overflow-hidden shrink-0">
-                        <img
-                          src={rel.image}
-                          alt={rel.title[language]}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <span className="text-xs font-medium text-primary uppercase tracking-wide">
-                          {rel.category}
-                        </span>
-                        <p className="text-sm font-semibold text-gray-800 leading-snug mt-0.5 group-hover:text-primary transition-colors line-clamp-2">
-                          {rel.title[language]}
-                        </p>
-                      </div>
-                    </Link>
-                  )) : (
-                    <p className="text-sm text-gray-500">
-                      {t('Nu exista alte articole.', 'No other articles yet.')}
-                    </p>
-                  )}
-                </div>
-
-                <button
-                  onClick={handleBack}
-                  className="mt-6 flex items-center justify-between w-full text-sm font-semibold text-primary hover:text-primary-dark transition-colors border-t border-gray-200 pt-5"
-                >
-                  <span>{t('Toate articolele', 'All articles')}</span>
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          </aside>
-        </div>
+        </article>
       </div>
     </div>
   );

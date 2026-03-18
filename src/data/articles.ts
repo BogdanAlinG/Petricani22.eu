@@ -53,14 +53,18 @@ const transformDBArticle = async (dbArticle: DBArticle): Promise<Article> => {
   let imageUrl = 'https://images.pexels.com/photos/1190298/pexels-photo-1190298.jpeg?auto=compress&cs=tinysrgb&w=800';
 
   if (dbArticle.featured_image_id) {
-    const { data: mediaData } = await supabase
-      .from('media_library')
-      .select('url')
-      .eq('id', dbArticle.featured_image_id)
-      .maybeSingle();
+    try {
+      const { data: mediaData } = await supabase
+        .from('media_library')
+        .select('url')
+        .eq('id', dbArticle.featured_image_id)
+        .maybeSingle();
 
-    if (mediaData?.url) {
-      imageUrl = mediaData.url;
+      if (mediaData?.url) {
+        imageUrl = mediaData.url;
+      }
+    } catch (error) {
+      console.error('Error fetching featured image:', error);
     }
   }
 
@@ -97,16 +101,23 @@ export const getFeaturedArticles = async (_language: 'RO' | 'EN'): Promise<Artic
   try {
     const { data, error } = await supabase
       .from('articles')
-      .select('*')
+      .select('id, title_ro, title_en, excerpt_ro, excerpt_en, content_ro, content_en, category, featured_image_id, read_time_ro, read_time_en, published_at, is_featured, is_visible, tags, slug_ro, slug_en, unit_calculator_slug')
       .eq('is_featured', true)
       .eq('is_visible', true)
       .order('display_order');
 
     if (error) throw error;
 
-    const articles = await Promise.all(
-      ((data as DBArticle[]) || []).map((dbArticle: DBArticle) => transformDBArticle(dbArticle))
-    );
+    const transformPromises = ((data as DBArticle[]) || []).map(async (dbArticle: DBArticle) => {
+      try {
+        return await transformDBArticle(dbArticle);
+      } catch (e) {
+        console.error(`Error transforming featured article ${dbArticle.id}:`, e);
+        return null;
+      }
+    });
+
+    const articles = (await Promise.all(transformPromises)).filter((a): a is Article => a !== null);
 
     return articles;
   } catch (error) {
@@ -119,15 +130,22 @@ export const getAllVisibleArticles = async (): Promise<Article[]> => {
   try {
     const { data, error } = await supabase
       .from('articles')
-      .select('*')
+      .select('id, title_ro, title_en, excerpt_ro, excerpt_en, content_ro, content_en, category, featured_image_id, read_time_ro, read_time_en, published_at, is_featured, is_visible, tags, slug_ro, slug_en, unit_calculator_slug')
       .eq('is_visible', true)
       .order('published_at', { ascending: false });
 
     if (error) throw error;
 
-    const articles = await Promise.all(
-      ((data as DBArticle[]) || []).map((dbArticle: DBArticle) => transformDBArticle(dbArticle))
-    );
+    const transformPromises = ((data as DBArticle[]) || []).map(async (dbArticle: DBArticle) => {
+      try {
+        return await transformDBArticle(dbArticle);
+      } catch (e) {
+        console.error(`Error transforming visible article ${dbArticle.id}:`, e);
+        return null;
+      }
+    });
+
+    const articles = (await Promise.all(transformPromises)).filter((a): a is Article => a !== null);
 
     return articles;
   } catch (error) {

@@ -298,7 +298,7 @@ const InspirationPage: React.FC = () => {
                   <div className="relative overflow-hidden aspect-[16/10] lg:aspect-auto">
                     <img
                       src={featuredArticle.image}
-                      alt={featuredArticle.title[language]}
+                      alt={featuredArticle.title?.[language] || ''}
                       className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                     />
                     <div className="absolute inset-0 bg-black/20" />
@@ -308,13 +308,13 @@ const InspirationPage: React.FC = () => {
                   </div>
                   <div className="p-8 lg:p-12 flex flex-col justify-center">
                     <p className="text-gray-500 text-sm mb-4">
-                      {formatDate(featuredArticle.publishedAt)} · {featuredArticle.readTime[language]}
+                      {formatDate(featuredArticle.publishedAt)} · {featuredArticle.readTime?.[language] || ''}
                     </p>
                     <h3 className="text-2xl lg:text-3xl font-bold text-white leading-tight mb-4 group-hover:text-primary transition-colors duration-300">
-                      {featuredArticle.title[language]}
+                      {featuredArticle.title?.[language] || ''}
                     </h3>
                     <p className="text-gray-400 leading-relaxed mb-8 line-clamp-3">
-                      {featuredArticle.excerpt[language]}
+                      {featuredArticle.excerpt?.[language] || ''}
                     </p>
                     <div className="inline-flex items-center gap-2 text-primary font-semibold text-sm group-hover:gap-3 transition-all duration-300">
                       <span>{t('Citeste articolul', 'Read article')}</span>
@@ -336,7 +336,7 @@ const InspirationPage: React.FC = () => {
                       <div className="relative overflow-hidden aspect-[16/9]">
                         <img
                           src={article.image}
-                          alt={article.title[language]}
+                          alt={article.title?.[language] || ''}
                           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                         />
                         <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors" />
@@ -346,13 +346,13 @@ const InspirationPage: React.FC = () => {
                       </div>
                       <div className="p-6">
                         <p className="text-gray-400 text-xs mb-2">
-                          {formatDate(article.publishedAt)} · {article.readTime[language]}
+                          {formatDate(article.publishedAt)} · {article.readTime?.[language] || ''}
                         </p>
                         <h3 className="text-xl font-bold text-gray-900 leading-snug mb-2 group-hover:text-primary transition-colors">
-                          {article.title[language]}
+                          {article.title?.[language] || ''}
                         </h3>
                         <p className="text-gray-500 text-sm leading-relaxed line-clamp-2">
-                          {article.excerpt[language]}
+                          {article.excerpt?.[language] || ''}
                         </p>
                         <div className="mt-4 inline-flex items-center gap-1.5 text-primary font-semibold text-sm group-hover:gap-2.5 transition-all duration-300">
                           <span>{t('Citeste', 'Read')}</span>
@@ -376,7 +376,7 @@ const InspirationPage: React.FC = () => {
                       <div className="w-24 h-24 sm:w-32 sm:h-24 rounded-xl overflow-hidden shrink-0">
                         <img
                           src={article.image}
-                          alt={article.title[language]}
+                          alt={article.title?.[language] || ''}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
                       </div>
@@ -386,14 +386,14 @@ const InspirationPage: React.FC = () => {
                             {article.category}
                           </span>
                           <span className="text-xs text-gray-400">
-                            {formatDate(article.publishedAt)} · {article.readTime[language]}
+                            {formatDate(article.publishedAt)} · {article.readTime?.[language] || ''}
                           </span>
                         </div>
                         <h3 className="font-bold text-gray-900 leading-snug group-hover:text-primary transition-colors mb-1.5">
-                          {article.title[language]}
+                          {article.title?.[language] || ''}
                         </h3>
                         <p className="text-sm text-gray-500 leading-relaxed line-clamp-2 hidden sm:block">
-                          {article.excerpt[language]}
+                          {article.excerpt?.[language] || ''}
                         </p>
                       </div>
                       <div className="shrink-0 self-center text-gray-300 group-hover:text-primary transition-colors">
