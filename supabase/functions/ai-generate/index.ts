@@ -157,7 +157,7 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const body: GenerateRequest = await req.json();
+    const body = await req.json() as GenerateRequest;
     const { type, language, context, existingContent, category } = body;
 
     const promptFn = PROMPTS[type];
@@ -186,7 +186,7 @@ Deno.serve(async (req: Request) => {
         "Authorization": `Bearer ${openaiKey}`,
       },
       body: JSON.stringify({
-        model: "gpt-4.1",
+        model: "gpt-4o",
         max_tokens: 2048,
         temperature: 0.7,
         messages: [

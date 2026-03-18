@@ -111,7 +111,7 @@ export default function ProductSync() {
       setItemsLimit(configResult.data?.items_per_category_limit ?? null);
       setSkipHours(configResult.data?.skip_if_synced_within_hours ?? 24);
 
-      const runningLog = (logsResult.data || []).find((l) => l.status === 'running');
+      const runningLog = (logsResult.data || []).find((l: SyncLog) => l.status === 'running');
       if (runningLog) {
         setRunningLogId(runningLog.id);
         runningLogIdRef.current = runningLog.id;
@@ -142,7 +142,7 @@ export default function ProductSync() {
           schema: 'public',
           table: 'sync_logs',
         },
-        (payload) => {
+        (payload: any) => {
           console.log('Realtime sync_logs update:', payload.eventType, payload.new);
           if (payload.eventType === 'INSERT') {
             const newLog = payload.new as SyncLog;
@@ -170,7 +170,7 @@ export default function ProductSync() {
           }
         }
       )
-      .subscribe((status, err) => {
+      .subscribe((status: string, err?: Error) => {
         console.log('Realtime sync_logs subscription status:', status, err || '');
       });
 
@@ -188,7 +188,7 @@ export default function ProductSync() {
           setLogDetails((prev) => [newDetail, ...prev]);
         }
       )
-      .subscribe((status, err) => {
+      .subscribe((status: string, err?: Error) => {
         console.log('Realtime sync_log_details subscription status:', status, err || '');
       });
 

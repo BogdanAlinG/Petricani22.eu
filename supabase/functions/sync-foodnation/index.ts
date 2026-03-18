@@ -368,7 +368,7 @@ async function cleanAndTranslateWithAI(
           Authorization: `Bearer ${openaiApiKey}`,
         },
         body: JSON.stringify({
-          model: "gpt-4.1",
+          model: "gpt-4o",
           messages: [
             { role: "system", content: AI_CLEANING_SYSTEM_PROMPT },
             { role: "user", content: userContent },
@@ -448,7 +448,7 @@ async function translateToEnglish(text: string, openaiApiKey: string, aiStats: A
           Authorization: `Bearer ${openaiApiKey}`,
         },
         body: JSON.stringify({
-          model: "gpt-4.1",
+          model: "gpt-4o",
           messages: [
             {
               role: "system",
@@ -726,7 +726,7 @@ Deno.serve(async (req: Request) => {
           email: payload.email,
         });
       }
-    } catch (e) {
+    } catch (e: any) {
       console.warn("Manual JWT decode failed:", e.message);
     }
 

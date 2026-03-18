@@ -75,7 +75,7 @@ export default function TestimonialsManagement() {
       if (error) throw error;
       setTestimonials(data || []);
 
-      const imageIds = data?.filter((t) => t.author_image_id).map((t) => t.author_image_id) || [];
+      const imageIds = data?.filter((t: Testimonial) => t.author_image_id).map((t: Testimonial) => t.author_image_id as string) || [];
       if (imageIds.length > 0) {
         const { data: mediaData } = await supabase
           .from('media_library')
@@ -84,7 +84,7 @@ export default function TestimonialsManagement() {
 
         if (mediaData) {
           const cache: Record<string, MediaItem> = {};
-          mediaData.forEach((m) => {
+          mediaData.forEach((m: MediaItem) => {
             cache[m.id] = m;
           });
           setMediaCache(cache);

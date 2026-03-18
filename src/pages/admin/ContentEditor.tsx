@@ -129,7 +129,7 @@ export default function ContentEditor() {
       const { data: sectionsData } = await supabase.from('page_sections').select('id').eq('page', selectedPage);
       if (!sectionsData || sectionsData.length === 0) { setBlocks([]); return; }
 
-      const sectionIds = sectionsData.map((s) => s.id);
+      const sectionIds = sectionsData.map((s: { id: string }) => s.id);
       const { data, error } = await supabase.from('content_blocks').select('*').in('section_id', sectionIds).order('display_order');
       if (error) throw error;
       setBlocks(data || []);

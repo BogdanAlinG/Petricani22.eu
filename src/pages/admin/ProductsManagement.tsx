@@ -168,7 +168,7 @@ export default function ProductsManagement() {
       .eq('product_id', productId);
 
     if (data) {
-      setSelectedAllergenIds(data.map((pa) => pa.allergen_id));
+      setSelectedAllergenIds(data.map((pa: { allergen_id: string }) => pa.allergen_id));
     } else {
       setSelectedAllergenIds([]);
     }
@@ -191,7 +191,7 @@ export default function ProductsManagement() {
 
     if (data) {
       setSizes(
-        data.map((s) => ({
+        data.map((s: any) => ({
           size_name_en: s.size_name_en,
           size_name_ro: s.size_name_ro,
           price_modifier: s.price_modifier,
@@ -298,7 +298,7 @@ export default function ProductsManagement() {
     targetLang: 'en' | 'ro'
   ) => {
     const sourceLang = targetLang === 'en' ? 'ro' : 'en';
-    const sourceValue = (form as Record<string, string>)[`${field}_${sourceLang}`];
+    const sourceValue = (form as unknown as Record<string, string>)[`${field}_${sourceLang}`];
 
     if (!sourceValue?.trim()) {
       toast.warning(`No ${sourceLang.toUpperCase()} content to translate from.`);
