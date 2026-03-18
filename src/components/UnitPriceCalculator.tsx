@@ -180,12 +180,12 @@ const UnitPriceCalculator: React.FC<UnitPriceCalculatorProps> = ({ unitSlug, sho
               <ArrowRight className="w-4 h-4" />
             </Link>
             {showContactLink && (
-              <a
-                href={`${homePath}#contact`}
+              <Link
+                to={`${homePath}#contact`}
                 className="px-6 h-12 rounded-xl border-2 border-gray-100 text-gray-700 font-bold hover:bg-gray-50 transition-colors flex items-center justify-center"
               >
                 {t('Contact', 'Contact')}
-              </a>
+              </Link>
             )}
           </div>
         </div>

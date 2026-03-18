@@ -13,7 +13,7 @@ const ScrollToHash: React.FC = () => {
         // Use a small timeout to ensure everything is rendered and transitions are done
         const timeoutId = setTimeout(() => {
           element.scrollIntoView({ behavior: 'smooth' });
-        }, 300);
+        }, 800);
         return () => clearTimeout(timeoutId);
       } else {
         // Element not found yet, try again slightly later (e.g., for slow-loading dynamic content)
@@ -22,7 +22,7 @@ const ScrollToHash: React.FC = () => {
           if (el) {
             setTimeout(() => {
               el.scrollIntoView({ behavior: 'smooth' });
-            }, 300);
+            }, 800);
             obs.disconnect();
           }
         });
