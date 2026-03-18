@@ -151,9 +151,16 @@ const ContactForm: React.FC = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
+    
+    // Filter phone number to only allow digits and +
+    let newValue = value;
+    if (name === 'phone') {
+      newValue = value.replace(/[^0-9+]/g, '');
+    }
+
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
+      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : newValue
     }));
   };
 
@@ -179,7 +186,18 @@ const ContactForm: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">{labelPhone}</label>
-                  <input type="tel" name="phone" value={formData.phone} onChange={handleChange} onInvalid={handleInvalid} onInput={handleInput} required className="w-full px-4 py-3 min-h-[48px] rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-transparent transition-colors text-base" />
+                  <input 
+                    type="tel" 
+                    name="phone" 
+                    value={formData.phone} 
+                    onChange={handleChange} 
+                    onInvalid={handleInvalid} 
+                    onInput={handleInput} 
+                    required 
+                    pattern="[+0-9]*"
+                    inputMode="tel"
+                    className="w-full px-4 py-3 min-h-[48px] rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-transparent transition-colors text-base" 
+                  />
                 </div>
               </div>
 
