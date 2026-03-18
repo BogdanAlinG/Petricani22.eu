@@ -5,6 +5,7 @@ import { CurrencyProvider } from './contexts/CurrencyContext';
 import { ToastProvider } from './components/ui/Toast';
 import { ConfirmProvider } from './components/ui/ConfirmDialog';
 import ErrorBoundary from './components/ui/ErrorBoundary';
+import { Analytics } from '@vercel/analytics/react';
 import App from './App.tsx';
 import './index.css';
 
@@ -16,6 +17,7 @@ createRoot(document.getElementById('root')!).render(
           <ConfirmProvider>
             <CurrencyProvider>
               <App />
+              <Analytics />
             </CurrencyProvider>
           </ConfirmProvider>
         </ToastProvider>
