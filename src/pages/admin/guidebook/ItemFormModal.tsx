@@ -166,8 +166,8 @@ export default function ItemFormModal({
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary text-sm font-mono"
                     placeholder={
                       activeTab === 'en'
-                        ? '**Network:** Petricani22\n**Password:** welcome2024\n\nConnect from any device.'
-                        : '**Rețea:** Petricani22\n**Parolă:** welcome2024'
+                        ? '**Network:** Petricani22\n**Password:** [password]\n\nConnect from any device.'
+                        : '**Rețea:** Petricani22\n**Parolă:** [parola]'
                     }
                   />
                   <p className="text-xs text-gray-400 mt-1">
