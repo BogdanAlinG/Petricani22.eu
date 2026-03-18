@@ -60,7 +60,7 @@ Category: ${req.category || "general"}${req.keywords ? `\nTarget SEO/Adwords Key
 Format the response as HTML with <h2>, <p>, <ul>/<li> tags. Include 3-4 sections. Around 400-600 words.
 IMPORTANT: Return ONLY raw HTML tags and text. Do NOT wrap in markdown code fences or backticks.`,
 
-  article_slug: (req) => `Generate a URL-friendly slug (URL ID) for a blog article about Petricani 22.
+  article_slug: (req) => `Generate a URL-friendly slug (URL ID) for a blog article about Petricani 22 in ${req.language === "ro" ? "Romanian" : "English"}.
 ${req.context ? `Title: ${req.context}` : ""}${req.keywords ? `\nSEO/Adwords Keywords: ${req.keywords}` : ""}${req.direction ? `\nDirection/Context: ${req.direction}` : ""}
 The slug should be lowercase, using only letters, numbers, and hyphens. Max 50 characters.
 Return ONLY the slug text, nothing else.`,
@@ -81,7 +81,7 @@ Instructions:
 3. If the user asks for a specific tone or addition, ensure it blends naturally with the existing text.
 4. IMPORTANT: Return ONLY the updated raw HTML. Do NOT wrap in markdown code fences or backticks.`,
 
-  translate_slug: (req) => `Translate the following URL slug to ${req.language === "ro" ? "English" : "Romanian"}.
+  translate_slug: (req) => `Translate the following URL slug to ${req.language === "ro" ? "Romanian" : "English"}.
 The slug is for a blog article about Petricani 22 (a rental property/event space).
 Make the translation SEO-friendly, use only lowercase letters, numbers, and hyphens. No special characters or spaces.
 
