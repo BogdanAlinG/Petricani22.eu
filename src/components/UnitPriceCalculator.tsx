@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Calculator, Check, ArrowRight } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
+import { Link } from 'react-router-dom';
 import Price from './Price';
 import { useLanguage } from '../contexts/LanguageContext';
-import { useQuote } from '../contexts/QuoteContext';
+import { useLocalizedPath } from '../hooks/useLocalizedPath';
 import { supabase } from '../lib/supabase';
 
 interface RentalOption {
@@ -34,8 +35,9 @@ const getIcon = (iconName: string): React.ElementType => {
 
 const UnitPriceCalculator: React.FC<UnitPriceCalculatorProps> = ({ unitSlug, showContactLink = true }) => {
   const { language, t } = useLanguage();
-  const { setQuoteRequest } = useQuote();
+  const { getAccommodationPath, accommodationsPath, homePath } = useLocalizedPath();
   const [option, setOption] = useState<RentalOption | null>(null);
+  const [accommodation, setAccommodation] = useState<{ slug: string; slug_ro: string } | null>(null);
   const [duration, setDuration] = useState('monthly');
   const [loading, setLoading] = useState(true);
 
@@ -43,14 +45,24 @@ const UnitPriceCalculator: React.FC<UnitPriceCalculatorProps> = ({ unitSlug, sho
     const fetchOption = async () => {
       try {
         setLoading(true);
-        const { data, error } = await supabase
-          .from('rental_options')
-          .select('*')
-          .eq('slug', unitSlug)
-          .single();
-
-        if (error) throw error;
-        setOption(data);
+        const [optionRes, accRes] = await Promise.all([
+          supabase
+            .from('rental_options')
+            .select('*')
+            .eq('slug', unitSlug)
+            .single(),
+          supabase
+            .from('accommodations')
+            .select('slug, slug_ro')
+            .or(`slug.eq."${unitSlug}",slug_ro.eq."${unitSlug}"`)
+            .maybeSingle()
+        ]);
+ 
+        if (optionRes.error) throw optionRes.error;
+        setOption(optionRes.data);
+        if (accRes.data) {
+          setAccommodation(accRes.data);
+        }
       } catch (error) {
         console.error('Error fetching unit for calculator:', error);
       } finally {
@@ -63,29 +75,6 @@ const UnitPriceCalculator: React.FC<UnitPriceCalculatorProps> = ({ unitSlug, sho
     }
   }, [unitSlug]);
 
-  const handleRequestQuote = () => {
-    if (!option) return;
-    
-    const configuration = language === 'RO' ? option.title_ro : option.title_en;
-    const periodMap: Record<string, { EN: string; RO: string }> = {
-      daily: { EN: 'A few days', RO: 'Câteva zile' },
-      weekly: { EN: 'One week', RO: 'O săptămână' },
-      monthly: { EN: '1-3 months', RO: '1-3 luni' },
-      yearly: { EN: 'Over 1 year', RO: 'Peste 1 an' },
-    };
-    
-    const rentalPeriod = periodMap[duration]?.[language] || '';
-
-    setQuoteRequest({ configuration, rentalPeriod });
-
-    const contactSection = document.getElementById('contact');
-    if (contactSection) {
-      contactSection.scrollIntoView({ behavior: 'smooth' });
-    } else {
-      // Fallback if not on home page or contact section missing
-      window.location.href = '/#contact';
-    }
-  };
 
   const getPrice = (opt: RentalOption, dur: string): number => {
     switch (dur) {
@@ -180,16 +169,19 @@ const UnitPriceCalculator: React.FC<UnitPriceCalculatorProps> = ({ unitSlug, sho
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4">
-            <button
-              onClick={handleRequestQuote}
+            <Link
+              to={accommodation 
+                ? getAccommodationPath({ slug: accommodation.slug, slug_ro: accommodation.slug_ro })
+                : accommodationsPath
+              }
               className="flex-1 bg-primary text-white h-12 rounded-xl font-bold hover:bg-primary-dark transition-colors flex items-center justify-center space-x-2 shadow-lg shadow-primary/20"
             >
-              <span>{t('Solicită Ofertă', 'Request Quote')}</span>
+              <span>{t('Rezervă Acum', 'Book Now')}</span>
               <ArrowRight className="w-4 h-4" />
-            </button>
+            </Link>
             {showContactLink && (
               <a
-                href="#contact"
+                href={`${homePath}#contact`}
                 className="px-6 h-12 rounded-xl border-2 border-gray-100 text-gray-700 font-bold hover:bg-gray-50 transition-colors flex items-center justify-center"
               >
                 {t('Contact', 'Contact')}
