@@ -3,6 +3,7 @@ import Header from './Header';
 import Footer from './Footer';
 import SEOHead from './SEOHead';
 import ScrollToTop from './ScrollToTop';
+import ScrollToHash from './ui/ScrollToHash';
 import PageTransition from './PageTransition';
 
 export default function Layout() {
@@ -16,6 +17,7 @@ export default function Layout() {
         </PageTransition>
         <Footer />
         <ScrollToTop />
+        <ScrollToHash />
       </div>
     </>
   );

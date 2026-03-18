@@ -34,7 +34,9 @@ export default function PageTransition({ children }: Props) {
     setPhase('exit');
 
     const exitTimer = setTimeout(() => {
-      window.scrollTo(0, 0);
+      if (!location.hash) {
+        window.scrollTo(0, 0);
+      }
       setDisplayChildren(pendingChildrenRef.current);
       prevPathRef.current = location.pathname;
       setPhase('enter');
