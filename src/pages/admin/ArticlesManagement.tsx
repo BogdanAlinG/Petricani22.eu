@@ -96,6 +96,8 @@ export default function ArticlesManagement() {
     return `${minutes} min`;
   };
   const [tagInput, setTagInput] = useState('');
+  const [refinementInstruction, setRefinementInstruction] = useState('');
+  const [showRefineInput, setShowRefineInput] = useState<{ lang: 'ro' | 'en' } | null>(null);
 
   useEffect(() => {
     fetchArticles();
@@ -477,6 +479,52 @@ export default function ArticlesManagement() {
       toast.success('Tags generated successfully');
     } else {
       toast.error('Tags generation failed');
+    }
+  };
+
+  const handleAiRefine = async (lang: 'ro' | 'en') => {
+    if (!refinementInstruction.trim()) {
+      toast.warning('Please enter a refinement instruction');
+      return;
+    }
+
+    const currentContent = editingArticle 
+      ? (lang === 'ro' ? editingArticle.content_ro : editingArticle.content_en)
+      : (lang === 'ro' ? newArticle.content_ro : newArticle.content_en);
+
+    if (!currentContent?.trim()) {
+      toast.warning('No content to refine.');
+      return;
+    }
+
+    const result = await generate(`refine-${lang}`, {
+      type: 'article_refine',
+      language: lang,
+      existingContent: currentContent,
+      context: refinementInstruction,
+    });
+
+    if (result) {
+      const field = `content_${lang}` as const;
+      const readTimeField = `read_time_${lang}` as const;
+      if (editingArticle) {
+        setEditingArticle({ 
+          ...editingArticle, 
+          [field]: result,
+          [readTimeField]: calculateReadTime(result)
+        });
+      } else {
+        setNewArticle({ 
+          ...newArticle, 
+          [field]: result,
+          [readTimeField]: calculateReadTime(result)
+        });
+      }
+      setRefinementInstruction('');
+      setShowRefineInput(null);
+      toast.success('Content refined successfully');
+    } else {
+      toast.error('Refinement failed');
     }
   };
 
@@ -871,8 +919,50 @@ export default function ArticlesManagement() {
                           variant="translate"
                           size="md"
                         />
+                        <button
+                          onClick={() => setShowRefineInput(showRefineInput?.lang === 'ro' ? null : { lang: 'ro' })}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition-colors ${
+                            showRefineInput?.lang === 'ro' 
+                              ? 'bg-primary/10 border-primary text-primary' 
+                              : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                          }`}
+                        >
+                          <BookOpen className="w-4 h-4" />
+                          <span className="text-sm font-medium italic">Refine with AI</span>
+                        </button>
                       </div>
                     </div>
+
+                    {showRefineInput?.lang === 'ro' && (
+                      <div className="mb-4 p-4 bg-primary/5 rounded-lg border border-primary/20 animate-in slide-in-from-top-2 duration-200">
+                        <label className="block text-xs font-bold text-primary uppercase tracking-wider mb-2">Refinement Instructions</label>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={refinementInstruction}
+                            onChange={(e) => setRefinementInstruction(e.target.value)}
+                            placeholder="e.g., Make it more professional / Add a section about garden parties..."
+                            className="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+                            onKeyPress={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleAiRefine('ro');
+                              }
+                            }}
+                          />
+                          <button
+                            onClick={() => handleAiRefine('ro')}
+                            disabled={!!generating || !refinementInstruction.trim()}
+                            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors disabled:opacity-50 text-sm font-medium whitespace-nowrap"
+                          >
+                            Apply Refinement
+                          </button>
+                        </div>
+                        <p className="text-[10px] text-gray-500 mt-2">
+                          This will send your current text to the AI and apply the changes you requested.
+                        </p>
+                      </div>
+                    )}
                     <RichTextEditor
                       value={editingArticle ? editingArticle.content_ro : newArticle.content_ro}
                       onChange={(value) =>
@@ -1009,8 +1099,50 @@ export default function ArticlesManagement() {
                           variant="translate"
                           size="md"
                         />
+                        <button
+                          onClick={() => setShowRefineInput(showRefineInput?.lang === 'en' ? null : { lang: 'en' })}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition-colors ${
+                            showRefineInput?.lang === 'en' 
+                              ? 'bg-primary/10 border-primary text-primary' 
+                              : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
+                          }`}
+                        >
+                          <BookOpen className="w-4 h-4" />
+                          <span className="text-sm font-medium italic">Refine with AI</span>
+                        </button>
                       </div>
                     </div>
+
+                    {showRefineInput?.lang === 'en' && (
+                      <div className="mb-4 p-4 bg-primary/5 rounded-lg border border-primary/20 animate-in slide-in-from-top-2 duration-200">
+                        <label className="block text-xs font-bold text-primary uppercase tracking-wider mb-2">Refinement Instructions</label>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={refinementInstruction}
+                            onChange={(e) => setRefinementInstruction(e.target.value)}
+                            placeholder="e.g., Make it more professional / Add a section about garden parties..."
+                            className="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+                            onKeyPress={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleAiRefine('en');
+                              }
+                            }}
+                          />
+                          <button
+                            onClick={() => handleAiRefine('en')}
+                            disabled={!!generating || !refinementInstruction.trim()}
+                            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors disabled:opacity-50 text-sm font-medium whitespace-nowrap"
+                          >
+                            Apply Refinement
+                          </button>
+                        </div>
+                        <p className="text-[10px] text-gray-500 mt-2">
+                          This will send your current text to the AI and apply the changes you requested.
+                        </p>
+                      </div>
+                    )}
                     <RichTextEditor
                       value={editingArticle ? editingArticle.content_en : newArticle.content_en}
                       onChange={(value) =>

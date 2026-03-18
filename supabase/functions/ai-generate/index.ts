@@ -16,6 +16,7 @@ interface GenerateRequest {
     | "article_content" 
     | "article_slug" 
     | "article_tags" 
+    | "article_refine" 
     | "section_title" 
     | "section_subtitle" 
     | "block_title" 
@@ -66,6 +67,18 @@ Return ONLY the slug text, nothing else.`,
   article_tags: (req) => `Generate 3-5 relevant SEO tags/keywords for a blog article about Petricani 22.
 ${req.context ? `Title/Topic: ${req.context}` : ""}${req.keywords ? `\nPromotion Keywords: ${req.keywords}` : ""}${req.direction ? `\nDirection/Intent: ${req.direction}` : ""}
 Return ONLY the tags separated by commas. Max 3 words per tag.`,
+
+  article_refine: (req) => `Refine and rewrite parts of the following blog article for Petricani 22 based on these instructions:
+"${req.context}"
+
+Existing Content (HTML):
+${req.existingContent}
+
+Instructions:
+1. Apply the user's requested changes while preserving the rest of the original meaning and context.
+2. Maintain the HTML structure (<h2>, <p>, <ul>, etc.).
+3. If the user asks for a specific tone or addition, ensure it blends naturally with the existing text.
+4. IMPORTANT: Return ONLY the updated raw HTML. Do NOT wrap in markdown code fences or backticks.`,
 
   section_title: (req) => `Write a short, impactful section title for the "${req.context || "section"}" of the Petricani 22 website in ${req.language === "ro" ? "Romanian" : "English"}.
 Return ONLY the title text, max 8 words.`,

@@ -14,6 +14,7 @@ export type AIGenerateType =
   | 'translate'
   | 'article_slug'
   | 'article_tags'
+  | 'article_refine'
   | 'product_short_description'
   | 'product_full_description';
 
