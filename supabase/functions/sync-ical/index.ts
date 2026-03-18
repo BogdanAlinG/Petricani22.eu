@@ -203,7 +203,13 @@ Deno.serve(async (req: Request) => {
 
         const events = parseICalContent(icalContent);
 
-        const eventsToInsert = events.map((event) => ({
+        const uniqueEventsMap = new Map();
+        for (const event of events) {
+          uniqueEventsMap.set(event.uid, event);
+        }
+        const uniqueEvents = Array.from(uniqueEventsMap.values());
+
+        const eventsToInsert = uniqueEvents.map((event) => ({
           ical_feed_id: feed.id,
           uid: event.uid,
           start_date: event.startDate,
