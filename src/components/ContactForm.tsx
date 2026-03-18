@@ -152,10 +152,11 @@ const ContactForm: React.FC = () => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     
-    // Filter phone number to only allow digits and +
+    // Filter phone number to only allow digits and a single + at the start
     let newValue = value;
     if (name === 'phone') {
-      newValue = value.replace(/[^0-9+]/g, '');
+      const startsWithPlus = value.trim().startsWith('+');
+      newValue = (startsWithPlus ? '+' : '') + value.replace(/[^0-9]/g, '');
     }
 
     setFormData(prev => ({
@@ -194,7 +195,7 @@ const ContactForm: React.FC = () => {
                     onInvalid={handleInvalid} 
                     onInput={handleInput} 
                     required 
-                    pattern="[+0-9]*"
+                    pattern="\+?[0-9]*"
                     inputMode="tel"
                     className="w-full px-4 py-3 min-h-[48px] rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-transparent transition-colors text-base" 
                   />
