@@ -25,6 +25,7 @@ export interface Article {
   tags: string[];
   slug_en: string;
   slug_ro: string;
+  unit_calculator_slug: string | null;
 }
 
 interface DBArticle {
@@ -45,6 +46,7 @@ interface DBArticle {
   tags: string[];
   slug_ro: string;
   slug_en: string;
+  unit_calculator_slug: string | null;
 }
 
 const transformDBArticle = async (dbArticle: DBArticle): Promise<Article> => {
@@ -87,6 +89,7 @@ const transformDBArticle = async (dbArticle: DBArticle): Promise<Article> => {
     tags: dbArticle.tags,
     slug_en: dbArticle.slug_en,
     slug_ro: dbArticle.slug_ro,
+    unit_calculator_slug: dbArticle.unit_calculator_slug,
   };
 };
 

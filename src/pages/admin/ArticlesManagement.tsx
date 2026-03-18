@@ -42,6 +42,7 @@ interface Article {
   display_order: number;
   slug_ro: string;
   slug_en: string;
+  unit_calculator_slug: string | null;
 }
 
 interface MediaItem {
@@ -62,6 +63,7 @@ export default function ArticlesManagement() {
   const [editingArticle, setEditingArticle] = useState<Article | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showImageSelector, setShowImageSelector] = useState(false);
+  const [rentalOptions, setRentalOptions] = useState<{ slug: string; title_ro: string; title_en: string }[]>([]);
   const [mediaCache, setMediaCache] = useState<Record<string, MediaItem>>({});
   const [filter, setFilter] = useState<'all' | 'featured' | 'hidden'>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -85,6 +87,7 @@ export default function ArticlesManagement() {
     ai_direction: '',
     slug_ro: '',
     slug_en: '',
+    unit_calculator_slug: null as string | null,
   });
 
   const calculateReadTime = (content: string) => {
@@ -101,7 +104,16 @@ export default function ArticlesManagement() {
 
   useEffect(() => {
     fetchArticles();
+    fetchRentalOptions();
   }, []);
+
+  const fetchRentalOptions = async () => {
+    const { data } = await supabase
+      .from('rental_options')
+      .select('slug, title_ro, title_en')
+      .order('display_order');
+    if (data) setRentalOptions(data);
+  };
 
   const fetchArticles = async () => {
     try {
@@ -179,6 +191,7 @@ export default function ArticlesManagement() {
         ai_direction: '',
         slug_ro: '',
         slug_en: '',
+        unit_calculator_slug: null,
       });
       setTagInput('');
     } catch (error) {
@@ -213,6 +226,7 @@ export default function ArticlesManagement() {
           ai_direction: editingArticle.ai_direction,
           slug_ro: editingArticle.slug_ro,
           slug_en: editingArticle.slug_en,
+          unit_calculator_slug: editingArticle.unit_calculator_slug,
         })
         .eq('id', editingArticle.id);
 
@@ -450,8 +464,38 @@ export default function ArticlesManagement() {
         const slugKey = activeTab === 'ro' ? 'slug_ro' : 'slug_en';
         setNewArticle({ ...newArticle, [slugKey]: result });
       }
+      toast.success('Slug generated successfully');
     } else {
       toast.error('Slug generation failed');
+    }
+  };
+
+  const aiTranslateSlug = async (targetLang: 'en' | 'ro') => {
+    const sourceLang = targetLang === 'en' ? 'ro' : 'en';
+    const article = editingArticle || newArticle;
+    const sourceSlug = targetLang === 'en' ? article.slug_ro : article.slug_en;
+
+    if (!sourceSlug?.trim()) {
+      toast.warning(`No ${sourceLang.toUpperCase()} slug to translate from.`);
+      return;
+    }
+
+    const result = await generate('translate-slug', {
+      type: 'translate_slug',
+      language: targetLang,
+      context: sourceSlug,
+    });
+
+    if (result) {
+      const slugKey = targetLang === 'ro' ? 'slug_ro' : 'slug_en';
+      if (editingArticle) {
+        setEditingArticle({ ...editingArticle, [slugKey]: result });
+      } else {
+        setNewArticle({ ...newArticle, [slugKey]: result });
+      }
+      toast.success('Slug translated successfully');
+    } else {
+      toast.error('Slug translation failed');
     }
   };
 
@@ -823,12 +867,20 @@ export default function ArticlesManagement() {
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <label className="block text-sm font-medium text-gray-700">URL Slug (Romanian)</label>
-                      <AIGenerateButton
-                        id="slug-ro"
-                        generating={generating}
-                        onClick={aiGenerateSlug}
-                        label="Generate Slug"
-                      />
+                      <div className="flex gap-1">
+                        <AIGenerateButton
+                          id="slug-ro"
+                          generating={generating}
+                          onClick={aiGenerateSlug}
+                          label="Generate Slug"
+                        />
+                        <AIGenerateButton
+                          id="slug-ro-tr"
+                          generating={generating}
+                          onClick={() => aiTranslateSlug('ro')}
+                          variant="translate"
+                        />
+                      </div>
                     </div>
                     <input
                       type="text"
@@ -1003,12 +1055,20 @@ export default function ArticlesManagement() {
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <label className="block text-sm font-medium text-gray-700">URL Slug (English)</label>
-                      <AIGenerateButton
-                        id="slug-en"
-                        generating={generating}
-                        onClick={aiGenerateSlug}
-                        label="Generate Slug"
-                      />
+                      <div className="flex gap-1">
+                        <AIGenerateButton
+                          id="slug-en"
+                          generating={generating}
+                          onClick={aiGenerateSlug}
+                          label="Generate Slug"
+                        />
+                        <AIGenerateButton
+                          id="slug-en-tr"
+                          generating={generating}
+                          onClick={() => aiTranslateSlug('en')}
+                          variant="translate"
+                        />
+                      </div>
                     </div>
                     <input
                       type="text"
@@ -1197,6 +1257,29 @@ export default function ArticlesManagement() {
                     {CATEGORIES.map((cat) => (
                       <option key={cat} value={cat}>
                         {cat}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Unit Price Calculator
+                  </label>
+                  <select
+                    value={editingArticle ? (editingArticle.unit_calculator_slug || '') : (newArticle.unit_calculator_slug || '')}
+                    onChange={(e) => {
+                      const val = e.target.value || null;
+                      editingArticle
+                        ? setEditingArticle({ ...editingArticle, unit_calculator_slug: val })
+                        : setNewArticle({ ...newArticle, unit_calculator_slug: val })
+                    }}
+                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  >
+                    <option value="">No calculator</option>
+                    {rentalOptions.map((opt) => (
+                      <option key={opt.slug} value={opt.slug}>
+                        {opt.title_en} ({opt.slug})
                       </option>
                     ))}
                   </select>

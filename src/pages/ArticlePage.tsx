@@ -5,6 +5,7 @@ import { ArrowLeft, Clock, Tag, Calendar, ChevronRight } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useLocalizedPath } from '../hooks/useLocalizedPath';
 import { getArticleById, getFeaturedArticles, Article } from '../data/articles';
+import UnitPriceCalculator from '../components/UnitPriceCalculator';
 
 const ArticlePage: React.FC = () => {
   const { language, t } = useLanguage();
@@ -150,6 +151,10 @@ const ArticlePage: React.FC = () => {
             <div className="article-body">
               <div dangerouslySetInnerHTML={{ __html: article.content[language] }} />
             </div>
+
+            {article.unit_calculator_slug && (
+              <UnitPriceCalculator unitSlug={article.unit_calculator_slug} />
+            )}
 
             {article.tags.length > 0 && (
               <div className="mt-12 pt-8 border-t border-gray-100">

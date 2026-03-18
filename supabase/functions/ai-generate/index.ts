@@ -9,20 +9,21 @@ const corsHeaders = {
 
 interface GenerateRequest {
   type: 
-    | "faq" 
-    | "faq_answer" 
-    | "article_title" 
-    | "article_excerpt" 
-    | "article_content" 
-    | "article_slug" 
-    | "article_tags" 
-    | "article_refine" 
-    | "section_title" 
-    | "section_subtitle" 
-    | "block_title" 
-    | "block_description" 
-    | "translate" 
-    | "product_short_description" 
+    | "faq"
+    | "faq_answer"
+    | "article_title"
+    | "article_excerpt"
+    | "article_content"
+    | "article_slug"
+    | "article_tags"
+    | "translate_slug"
+    | "article_refine"
+    | "section_title"
+    | "section_subtitle"
+    | "block_title"
+    | "block_description"
+    | "translate"
+    | "product_short_description"
     | "product_full_description";
   language: "en" | "ro";
   context?: string;
@@ -79,6 +80,14 @@ Instructions:
 2. Maintain the HTML structure (<h2>, <p>, <ul>, etc.).
 3. If the user asks for a specific tone or addition, ensure it blends naturally with the existing text.
 4. IMPORTANT: Return ONLY the updated raw HTML. Do NOT wrap in markdown code fences or backticks.`,
+
+  translate_slug: (req) => `Translate the following URL slug to ${req.language === "ro" ? "English" : "Romanian"}.
+The slug is for a blog article about Petricani 22 (a rental property/event space).
+Make the translation SEO-friendly, use only lowercase letters, numbers, and hyphens. No special characters or spaces.
+
+Original Slug: ${req.context}
+
+Return ONLY the translated slug string.`,
 
   section_title: (req) => `Write a short, impactful section title for the "${req.context || "section"}" of the Petricani 22 website in ${req.language === "ro" ? "Romanian" : "English"}.
 Return ONLY the title text, max 8 words.`,
