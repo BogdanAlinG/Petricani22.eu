@@ -368,7 +368,7 @@ async function cleanAndTranslateWithAI(
           Authorization: `Bearer ${openaiApiKey}`,
         },
         body: JSON.stringify({
-          model: "gpt-4o",
+          model: "gpt-4.1",
           messages: [
             { role: "system", content: AI_CLEANING_SYSTEM_PROMPT },
             { role: "user", content: userContent },
@@ -448,7 +448,7 @@ async function translateToEnglish(text: string, openaiApiKey: string, aiStats: A
           Authorization: `Bearer ${openaiApiKey}`,
         },
         body: JSON.stringify({
-          model: "gpt-4o",
+          model: "gpt-4.1",
           messages: [
             {
               role: "system",
@@ -824,7 +824,17 @@ Deno.serve(async (req: Request) => {
         .select("id")
         .single();
 
-      if (logError) throw logError;
+      if (logError) {
+        // If we get a unique constraint violation, it means another sync started between our check and our insert
+        if (logError.code === '23505') {
+          console.warn("Concurrent sync detected during insert (Unique constraint)");
+          return new Response(JSON.stringify({ error: "Sync already in progress" }), {
+            status: 409,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        throw logError;
+      }
       initialLogId = logEntry.id;
     }
 
@@ -847,6 +857,10 @@ Deno.serve(async (req: Request) => {
       };
 
       try {
+        console.log(`[Task ${logId}] Background task started`);
+        // Update phase to show we've actually started the task logic
+        await supabase.from("sync_logs").update({ current_phase: "Fetching target products metadata..." }).eq("id", logId);
+
         // 1. Initial Setup or Resume
         if (existingLogId) {
           // Resume: Load current progress stats from DB
@@ -862,26 +876,38 @@ Deno.serve(async (req: Request) => {
         }
 
         // 2. Fetch Source Data
+        console.log(`[Task ${logId}] Starting source data fetch from ${config.source_url}`);
         let allProducts: ShopifyProduct[] = [];
         let page = 1;
         const fetchLimit = 250;
         while (true) {
+          console.log(`[Task ${logId}] Fetching source page ${page}...`);
           const response = await fetchWithTimeout(`${config.source_url}?limit=${fetchLimit}&page=${page}`, { method: "GET" }, 60000);
-          if (!response.ok) throw new Error(`Fetch failed: ${response.status}`);
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`[Task ${logId}] Fetch failed: ${response.status} ${errorText}`);
+            throw new Error(`Fetch failed: ${response.status}`);
+          }
           const data: ShopifyResponse = await response.json();
           if (!data.products || data.products.length === 0) break;
           allProducts = allProducts.concat(data.products);
+          console.log(`[Task ${logId}] Extracted ${data.products.length} products (Global: ${allProducts.length})`);
           if (data.products.length < fetchLimit) break;
           page++;
           if (page > 10) break;
         }
 
+        console.log(`[Task ${logId}] Total source products: ${allProducts.length}`);
+        await supabase.from("sync_logs").update({ current_phase: "Fetching metadata & categories..." }).eq("id", logId);
+
         const [categoriesRes, allergensRes] = await Promise.all([
           supabase.from("categories").select("id, name_ro, name_en, slug"),
           supabase.from("allergens").select("id, name_en, name_ro"),
         ]);
+        console.log(`[Task ${logId}] Categories fetched: ${categoriesRes.data?.length || 0}, Allergens fetched: ${allergensRes.data?.length || 0}`);
         const categories = categoriesRes.data || [];
         const exchangeRate = await getExchangeRate(supabase);
+        console.log(`[Task ${logId}] Exchange rate fetched: ${exchangeRate}`);
         const skipIfSyncedWithinHours = config.skip_if_synced_within_hours ?? 24;
         const skipThreshold = new Date();
         skipThreshold.setHours(skipThreshold.getHours() - skipIfSyncedWithinHours);

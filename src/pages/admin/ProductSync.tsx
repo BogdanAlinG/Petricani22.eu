@@ -198,9 +198,12 @@ export default function ProductSync() {
     };
   }, []);
 
-  const runSync = async () => {
-    if (!config) return;
+  const isStartingRef = useRef(false);
 
+  const runSync = async () => {
+    if (!config || syncing || syncStarting || isStartingRef.current) return;
+
+    isStartingRef.current = true;
     setSyncStarting(true);
     setError(null);
 
@@ -234,10 +237,13 @@ export default function ProductSync() {
         setSyncing(true);
         setSyncStarting(false);
       }
+      // Always reset the starting ref once the invocation is done (successfully or not)
+      isStartingRef.current = false;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Sync failed';
       setError(message);
       setSyncStarting(false);
+      isStartingRef.current = false;
       console.error('Sync error:', err);
     }
   };
