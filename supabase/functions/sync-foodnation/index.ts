@@ -1,5 +1,124 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { createClient } from "npm:@supabase/supabase-js@2";
+import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
+
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
+
+export interface Database {
+  public: {
+    Tables: {
+      exchange_rates: {
+        Row: { rate: string; [key: string]: any }
+        Insert: { rate?: string; [key: string]: any }
+        Update: { rate?: string; [key: string]: any }
+        Relationships: []
+      }
+      product_allergens: {
+        Row: { product_id: string; allergen_id: string; [key: string]: any }
+        Insert: { product_id: string; allergen_id: string; [key: string]: any }
+        Update: { product_id?: string; allergen_id?: string; [key: string]: any }
+        Relationships: []
+      }
+      sync_logs: {
+        Row: {
+          id: string
+          cancellation_requested: boolean | null
+          progress_total: number | null
+          products_created: number | null
+          products_updated: number | null
+          products_skipped: number | null
+          products_failed: number | null
+          progress_current: number | null
+          status: string
+          current_phase: string | null
+          [key: string]: any
+        }
+        Insert: {
+          configuration_id: string
+          status?: string
+          current_phase?: string | null
+          progress_current?: number
+          progress_total?: number
+          [key: string]: any
+        }
+        Update: {
+          status?: string
+          current_phase?: string | null
+          products_synced?: number | null
+          products_skipped?: number | null
+          products_failed?: number | null
+          products_created?: number | null
+          products_updated?: number | null
+          completed_at?: string | null
+          progress_current?: number | null
+          progress_total?: number | null
+          error_message?: string | null
+          [key: string]: any
+        }
+        Relationships: []
+      }
+      sync_log_details: {
+        Row: { [key: string]: any }
+        Insert: {
+          sync_log_id: string
+          source_product_id: string
+          product_title: string
+          action: string
+          skip_reason?: string | null
+          error_message?: string | null
+          [key: string]: any
+        }
+        Update: { [key: string]: any }
+        Relationships: []
+      }
+      sync_configurations: {
+        Row: {
+          id: string
+          source_name: string
+          source_url: string
+          category_mappings: any
+          items_per_category_limit: number | null
+          is_active: boolean
+          last_sync_at: string | null
+          skip_if_synced_within_hours: number | null
+          [key: string]: any
+        }
+        Insert: { [key: string]: any }
+        Update: { last_sync_at?: string | null; [key: string]: any }
+        Relationships: []
+      }
+      products: {
+        Row: { id: string; [key: string]: any }
+        Insert: { slug: string; slug_ro: string; category_id: string; [key: string]: any }
+        Update: { slug?: string; slug_ro?: string; category_id?: string; [key: string]: any }
+        Relationships: []
+      }
+      synced_products: {
+        Row: { id: string; product_id: string; last_synced_at: string; [key: string]: any }
+        Insert: { product_id: string; source_id: string; source_name: string; source_data: any; [key: string]: any }
+        Update: { last_synced_at?: string; [key: string]: any }
+        Relationships: []
+      }
+      categories: {
+        Row: { id: string; name_ro: string; name_en: string; slug: string; [key: string]: any }
+        Insert: { [key: string]: any }
+        Update: { [key: string]: any }
+        Relationships: []
+      }
+      allergens: {
+        Row: { id: string; name_en: string; name_ro: string; [key: string]: any }
+        Insert: { [key: string]: any }
+        Update: { [key: string]: any }
+        Relationships: []
+      }
+    }
+    Views: { [_ in never]: never }
+    Functions: { [_ in never]: never }
+    Enums: { [_ in never]: never }
+    CompositeTypes: { [_ in never]: never }
+  }
+}
+
+type SyncClient = SupabaseClient<Database>;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -221,7 +340,7 @@ function extractFirstTwoSentences(text: string): string {
   return sentences.join(" ").trim();
 }
 
-async function getExchangeRate(supabase: ReturnType<typeof createClient>): Promise<number> {
+async function getExchangeRate(supabase: SyncClient): Promise<number> {
   const FALLBACK_RATE = 4.95;
 
   const { data: cachedRate } = await supabase
@@ -235,7 +354,7 @@ async function getExchangeRate(supabase: ReturnType<typeof createClient>): Promi
     .maybeSingle();
 
   if (cachedRate) {
-    return parseFloat(cachedRate.rate);
+    return parseFloat((cachedRate as any).rate);
   }
 
   return FALLBACK_RATE;
@@ -527,7 +646,7 @@ function generateSlug(text: string): string {
 }
 
 async function getUniqueSlug(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SyncClient,
   baseSlug: string,
   column: "slug" | "slug_ro",
   excludeProductId?: string
@@ -558,7 +677,7 @@ async function getUniqueSlug(
 }
 
 async function matchAllergens(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SyncClient,
   productId: string,
   rawAllergens: string[],
   allergenRecords: AllergenRecord[]
@@ -594,11 +713,11 @@ async function matchAllergens(
     allergen_id: allergenId,
   }));
 
-  await supabase.from("product_allergens").insert(rows);
+  await (supabase.from("product_allergens") as any).insert(rows);
 }
 
 async function checkCancellation(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SyncClient,
   logId: string
 ): Promise<boolean> {
   const { data } = await supabase
@@ -607,11 +726,11 @@ async function checkCancellation(
     .eq("id", logId)
     .maybeSingle();
 
-  return data?.cancellation_requested === true;
+  return data ? data.cancellation_requested === true : false;
 }
 
 async function updateProgress(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SyncClient,
   logId: string,
   progress: SyncProgress,
   phase: string
@@ -626,12 +745,12 @@ async function updateProgress(
       products_skipped: progress.skipped,
       products_failed: progress.failed,
       current_phase: phase,
-    })
+    } as any)
     .eq("id", logId);
 }
 
 async function logProductDetail(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SyncClient,
   logId: string,
   sourceProductId: string,
   productTitle: string,
@@ -639,7 +758,7 @@ async function logProductDetail(
   skipReason?: string,
   errorMessage?: string
 ): Promise<void> {
-  await supabase.from("sync_log_details").insert({
+  await (supabase.from("sync_log_details") as any).insert({
     sync_log_id: logId,
     source_product_id: sourceProductId,
     product_title: productTitle,
@@ -650,7 +769,7 @@ async function logProductDetail(
 }
 
 async function handleCancellation(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SyncClient,
   logId: string,
   progress: SyncProgress,
   phase: string
@@ -668,7 +787,7 @@ async function handleCancellation(
       products_created: progress.created,
       products_updated: progress.updated,
       completed_at: new Date().toISOString(),
-    })
+    } as any)
     .eq("id", logId);
 
   return new Response(
@@ -706,7 +825,9 @@ Deno.serve(async (req: Request) => {
     }
 
     const authHeader = req.headers.get("Authorization");
+    console.log("Auth header present:", !!authHeader);
     if (!authHeader) {
+      console.error("Missing authorization header");
       return new Response(JSON.stringify({ error: "Missing authorization" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -734,7 +855,7 @@ Deno.serve(async (req: Request) => {
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
+    const userClient = createClient<Database>(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } },
     });
 
@@ -751,7 +872,7 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createClient<Database>(supabaseUrl, supabaseServiceKey);
 
     // Initial config check
     const { data: config, error: configError } = await supabase
@@ -767,7 +888,7 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    if (!config.is_active) {
+    if (!(config as any).is_active) {
       return new Response(JSON.stringify({ error: "Sync is disabled" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -778,7 +899,7 @@ Deno.serve(async (req: Request) => {
     const { data: existingRunning } = await supabase
       .from("sync_logs")
       .select("id")
-      .eq("configuration_id", config.id)
+      .eq("configuration_id", (config as any).id)
       .eq("status", "running")
       .limit(1)
       .maybeSingle();
@@ -791,10 +912,10 @@ Deno.serve(async (req: Request) => {
     }
 
     // Create log entry immediately so the frontend has an ID to poll
-    const { data: logEntry, error: logError } = await supabase
-      .from("sync_logs")
+    const { data: logEntry, error: logError } = await (supabase
+      .from("sync_logs") as any)
       .insert({
-        configuration_id: config.id,
+        configuration_id: (config as any).id,
         status: "running",
         current_phase: "Starting background sync...",
       })
@@ -832,14 +953,14 @@ Deno.serve(async (req: Request) => {
       try {
         // 1. Initial Setup or Resume
         if (!logId) {
-          const { data: newLog, error: logError } = await supabase
-            .from("sync_logs")
+          const { data: newLog, error: logError } = await (supabase
+            .from("sync_logs") as any)
             .insert({
               status: "running",
               current_phase: "Fetching products...",
               progress_current: 0,
               progress_total: 0,
-              configuration_id: config.id
+              configuration_id: (config as any).id
             })
             .select("id")
             .single();
@@ -850,12 +971,12 @@ Deno.serve(async (req: Request) => {
           // Resume: Load current progress stats from DB
           const { data: log } = await supabase.from("sync_logs").select("*").eq("id", logId).single();
           if (log) {
-            progress.total = log.progress_total || 0;
-            progress.created = log.products_created || 0;
-            progress.updated = log.products_updated || 0;
-            progress.skipped = log.products_skipped || 0;
-            progress.failed = log.products_failed || 0;
-            progress.current = log.progress_current || offset;
+            progress.total = (log as any).progress_total || 0;
+            progress.created = (log as any).products_created || 0;
+            progress.updated = (log as any).products_updated || 0;
+            progress.skipped = (log as any).products_skipped || 0;
+            progress.failed = (log as any).products_failed || 0;
+            progress.current = (log as any).progress_current || offset;
           }
         }
 
@@ -864,7 +985,7 @@ Deno.serve(async (req: Request) => {
         let page = 1;
         const fetchLimit = 250;
         while (true) {
-          const response = await fetchWithTimeout(`${config.source_url}?limit=${fetchLimit}&page=${page}`, { method: "GET" }, 60000);
+          const response = await fetchWithTimeout(`${(config as any).source_url}?limit=${fetchLimit}&page=${page}`, { method: "GET" }, 60000);
           if (!response.ok) throw new Error(`Fetch failed: ${response.status}`);
           const data: ShopifyResponse = await response.json();
           if (!data.products || data.products.length === 0) break;
@@ -880,14 +1001,14 @@ Deno.serve(async (req: Request) => {
         ]);
         const categories = categoriesRes.data || [];
         const exchangeRate = await getExchangeRate(supabase);
-        const skipIfSyncedWithinHours = config.skip_if_synced_within_hours ?? 24;
+        const skipIfSyncedWithinHours = (config as any).skip_if_synced_within_hours ?? 24;
         const skipThreshold = new Date();
         skipThreshold.setHours(skipThreshold.getHours() - skipIfSyncedWithinHours);
 
         // Prep products
         const productsToProcess: any[] = [];
-        const categoryMappings: CategoryMapping = config.category_mappings || {};
-        const itemsPerCategory = config.items_per_category_limit || null;
+        const categoryMappings: CategoryMapping = (config as any).category_mappings || {};
+        const itemsPerCategory = (config as any).items_per_category_limit || null;
         const processedInCategory: Record<string, number> = {};
 
         for (const p of allProducts) {
@@ -902,7 +1023,7 @@ Deno.serve(async (req: Request) => {
 
         progress.total = productsToProcess.length;
         if (offset === 0) {
-          await supabase.from("sync_logs").update({ progress_total: progress.total }).eq("id", logId);
+          await (supabase.from("sync_logs") as any).update({ progress_total: progress.total }).eq("id", logId);
         }
 
         // 3. Process Chunk
@@ -913,7 +1034,7 @@ Deno.serve(async (req: Request) => {
             completed_at: new Date().toISOString(),
             current_phase: "Sync completed successfully"
           }).eq("id", logId);
-          await supabase.from("sync_configurations").update({ last_sync_at: new Date().toISOString() }).eq("id", config.id);
+          await (supabase.from("sync_configurations") as any).update({ last_sync_at: new Date().toISOString() }).eq("id", (config as any).id);
           return;
         }
 
@@ -932,7 +1053,7 @@ Deno.serve(async (req: Request) => {
               .eq("source_id", product.id.toString())
               .maybeSingle();
 
-            if (existing?.last_synced_at && new Date(existing.last_synced_at) > skipThreshold) {
+            if ((existing as any)?.last_synced_at && new Date((existing as any).last_synced_at) > skipThreshold) {
               progress.skipped++;
               progress.current++;
               await logProductDetail(supabase, logId, product.id.toString(), product.title, "skipped", "Recently synced");
@@ -976,16 +1097,16 @@ Deno.serve(async (req: Request) => {
                 if (existing) {
                   const uniqueSlug = await getUniqueSlug(supabase, slugEn, "slug", existing.product_id);
                   const uniqueSlugRo = await getUniqueSlug(supabase, slugRo, "slug_ro", existing.product_id);
-                  await supabase.from("products").update({ ...productData, slug: uniqueSlug, slug_ro: uniqueSlugRo }).eq("id", existing.product_id);
-                  await supabase.from("synced_products").update({ last_synced_at: new Date().toISOString() }).eq("id", existing.id);
+                  await (supabase.from("products") as any).update({ ...productData, slug: uniqueSlug, slug_ro: uniqueSlugRo }).eq("id", (existing as any).product_id);
+                  await (supabase.from("synced_products") as any).update({ last_synced_at: new Date().toISOString() }).eq("id", (existing as any).id);
                   progress.updated++;
                   await logProductDetail(supabase, logId, product.id.toString(), product.title, "updated");
                 } else {
                   const uniqueSlug = await getUniqueSlug(supabase, slugEn, "slug");
                   const uniqueSlugRo = await getUniqueSlug(supabase, slugRo, "slug_ro");
-                  const { data: newP } = await supabase.from("products").insert({ ...productData, slug: uniqueSlug, slug_ro: uniqueSlugRo }).select("id").single();
+                  const { data: newP } = await (supabase.from("products") as any).insert({ ...productData, slug: uniqueSlug, slug_ro: uniqueSlugRo }).select("id").single();
                   if (newP) {
-                    await supabase.from("synced_products").insert({ product_id: newP.id, source_id: product.id.toString(), source_name: "foodnation", source_data: product });
+                    await (supabase.from("synced_products") as any).insert({ product_id: (newP as any).id, source_id: product.id.toString(), source_name: "foodnation", source_data: product });
                     progress.created++;
                     await logProductDetail(supabase, logId, product.id.toString(), product.title, "created");
                   }
@@ -1026,7 +1147,7 @@ Deno.serve(async (req: Request) => {
             completed_at: new Date().toISOString(),
             current_phase: "Sync completed successfully"
           }).eq("id", logId);
-          await supabase.from("sync_configurations").update({ last_sync_at: new Date().toISOString() }).eq("id", config.id);
+          await (supabase.from("sync_configurations") as any).update({ last_sync_at: new Date().toISOString() }).eq("id", (config as any).id);
         }
 
       } catch (err) {
