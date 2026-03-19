@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Calendar, Star, Loader } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useCurrency } from '../../contexts/CurrencyContext';
-import { useAvailability, usePriceCalculation } from '../../hooks/useAccommodations';
+import { useAvailability, usePriceCalculation, calculateMinPricePerNight } from '../../hooks/useAccommodations';
 import { useLocalizedPath } from '../../hooks/useLocalizedPath';
 import type { Accommodation } from '../../types/accommodation';
 import DateRangePicker from './DateRangePicker';
@@ -103,7 +103,7 @@ export default function BookingWidget({ accommodation }: BookingWidgetProps) {
         <div className="flex items-baseline gap-2">
           <span className="text-sm text-gray-500">{t.from}</span>
           <span className="text-3xl font-bold text-gray-900">
-            {formatPrice(accommodation.base_price_per_night)}
+            {formatPrice(calculateMinPricePerNight(accommodation))}
           </span>
           <span className="text-gray-500">{t.perNight}</span>
         </div>

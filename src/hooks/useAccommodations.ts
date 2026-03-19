@@ -435,3 +435,11 @@ export async function getBookingByNumber(
     return { data: null, error: 'Failed to fetch booking' };
   }
 }
+
+export function calculateMinPricePerNight(accommodation: Accommodation): number {
+  const rates = [accommodation.base_price_per_night];
+  if (accommodation.price_weekly > 0) rates.push(accommodation.price_weekly / 7);
+  if (accommodation.price_monthly > 0) rates.push(accommodation.price_monthly / 30);
+  if (accommodation.price_yearly > 0) rates.push(accommodation.price_yearly / 365);
+  return Math.round(Math.min(...rates));
+}

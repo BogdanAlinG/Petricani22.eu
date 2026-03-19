@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Bed, Bath, Users, ArrowRight, Star, Loader, Maximize2 } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useCurrency } from '../contexts/CurrencyContext';
-import { useAccommodations } from '../hooks/useAccommodations';
+import { useAccommodations, calculateMinPricePerNight } from '../hooks/useAccommodations';
 import { useLocalizedPath } from '../hooks/useLocalizedPath';
 import { useScrollReveal } from '../hooks/useScrollReveal';
 import type { Accommodation } from '../types/accommodation';
@@ -64,10 +64,11 @@ function AccommodationCard({ accommodation, index }: { accommodation: Accommodat
       ? accommodation.short_description_en
       : accommodation.short_description_ro;
 
+  const minPrice = calculateMinPricePerNight(accommodation);
   const price =
     currency === 'EUR'
-      ? accommodation.base_price_per_night
-      : Math.round(accommodation.base_price_per_night * (exchangeRate || 4.95));
+      ? minPrice
+      : Math.round(minPrice * (exchangeRate || 4.95));
 
   const currencySymbol = currency === 'EUR' ? '€' : 'RON';
   const detailPath = getAccommodationPath({ slug: accommodation.slug, slug_ro: accommodation.slug_ro });
