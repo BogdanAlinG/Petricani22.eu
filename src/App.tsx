@@ -47,6 +47,7 @@ const AccommodationsManagement = lazy(() => import('./pages/admin/Accommodations
 const BookingsManagement = lazy(() => import('./pages/admin/BookingsManagement'));
 const AvailabilityCalendar = lazy(() => import('./pages/admin/AvailabilityCalendar'));
 const GuidebookManagement = lazy(() => import('./pages/admin/GuidebookManagement'));
+const AmenitiesManagement = lazy(() => import('./pages/admin/AmenitiesManagement'));
 
 function AdminFallback() {
   return (
@@ -131,6 +132,7 @@ function App() {
                     <Route path="bookings" element={<BookingsManagement />} />
                     <Route path="availability" element={<AvailabilityCalendar />} />
                     <Route path="guidebook" element={<GuidebookManagement />} />
+                    <Route path="amenities" element={<AmenitiesManagement />} />
                     <Route path="media" element={<MediaLibrary />} />
                     <Route path="delivery" element={<DeliverySettings />} />
                     <Route path="contacts" element={<ContactSubmissions />} />
