@@ -10,6 +10,7 @@ const UNIT_TYPES = [
   { value: 'villa', label: 'Villa' },
   { value: 'suite', label: 'Suite' },
   { value: 'studio', label: 'Studio' },
+  { value: 'yard', label: 'Yard' },
 ];
 
 const TABS = ['basic', 'gallery', 'content', 'pricing', 'amenities'] as const;
