@@ -26,6 +26,7 @@ export interface Accommodation {
   display_order: number;
   is_visible: boolean;
   is_featured: boolean;
+  show_house_rules: boolean;
   guidebook_pin: string | null;
   created_at: string;
   updated_at: string;

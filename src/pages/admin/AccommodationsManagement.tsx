@@ -35,6 +35,7 @@ const emptyAccommodation: Omit<Accommodation, 'id' | 'created_at' | 'updated_at'
   display_order: 0,
   is_visible: true,
   is_featured: false,
+  show_house_rules: true,
   guidebook_pin: null,
 };
 
@@ -155,6 +156,7 @@ export default function AccommodationsManagement() {
         display_order: editing.display_order,
         is_visible: editing.is_visible,
         is_featured: editing.is_featured,
+        show_house_rules: editing.show_house_rules,
         guidebook_pin: editing.guidebook_pin || null,
       };
 

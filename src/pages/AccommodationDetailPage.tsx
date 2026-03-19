@@ -568,7 +568,7 @@ export default function AccommodationDetailPage() {
               </div>
             )}
 
-            {rules.length > 0 && (
+            {rules.length > 0 && accommodation.show_house_rules !== false && (
               <div
                 className="border-t border-gray-200 pt-10"
               >
