@@ -705,53 +705,44 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: "Missing authorization" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Auth check using manual JWT decode first for logging, then verify via getUser
-    const token = authHeader.replace("Bearer ", "");
-    try {
-      const parts = token.split('.');
-      if (parts.length === 3) {
-        const payload = JSON.parse(atob(parts[1]));
-        console.log("JWT Claims:", {
-          aud: payload.aud,
-          role: payload.role,
-          sub: payload.sub,
-          email: payload.email,
-        });
-      }
-    } catch (e) {
-      console.warn("Manual JWT decode failed:", e.message);
-    }
-
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-
-    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
-
-    const {
-      data: { user },
-      error: authError,
-    } = await userClient.auth.getUser();
-
-    if (authError || !user) {
-      console.error("Auth failed:", authError?.message);
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Parse body first so we can distinguish chained vs. new-sync calls
+    const payload = await req.json().catch(() => ({}));
+    const {
+      log_id: existingLogId,
+      offset = 0,
+      limit = 50,
+    } = payload;
+
+    // Auth: chained calls (existingLogId present) are validated via DB log existence.
+    // New syncs require a valid user JWT.
+    if (!existingLogId) {
+      const authHeader = req.headers.get("Authorization");
+      if (!authHeader) {
+        return new Response(JSON.stringify({ error: "Missing authorization" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const userClient = createClient(supabaseUrl, supabaseAnonKey, {
+        global: { headers: { Authorization: authHeader } },
+      });
+      const {
+        data: { user },
+        error: authError,
+      } = await userClient.auth.getUser();
+      if (authError || !user) {
+        console.error("Auth failed:", authError?.message);
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
 
     // Initial config check
     const { data: config, error: configError } = await supabase
@@ -773,14 +764,6 @@ Deno.serve(async (req: Request) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-
-    // Parse request body early to check for chaining
-    const payload = await req.json().catch(() => ({}));
-    const { 
-      log_id: existingLogId,
-      offset = 0,
-      limit = 10 
-    } = payload;
 
     // Check if already running, excluding the current log being chained
     let runningQuery = supabase
@@ -931,9 +914,14 @@ Deno.serve(async (req: Request) => {
           productsToProcess.push({ ...p, category_id_internal: categoryId });
         }
 
-        progress.total = productsToProcess.length;
         if (offset === 0) {
+          // First call: set the authoritative total from the freshly fetched list
+          progress.total = productsToProcess.length;
           await supabase.from("sync_logs").update({ progress_total: progress.total }).eq("id", logId);
+        } else {
+          // Chained call: trust the total from DB (loaded earlier) so we don't
+          // short-circuit if Shopify returns slightly different counts mid-sync
+          progress.total = progress.total || productsToProcess.length;
         }
 
         // 3. Process Chunk
@@ -1046,19 +1034,23 @@ Deno.serve(async (req: Request) => {
         // 4. Chain Next Call
         if (progress.current < progress.total) {
           console.log(`[Task ${logId}] Chaining next chunk from offset ${progress.current}`);
-          
-          await supabase.functions.invoke("sync-foodnation", {
+
+          const { error: chainError } = await supabase.functions.invoke("sync-foodnation", {
             body: {
               log_id: logId,
               offset: progress.current,
               limit: limit,
             },
-            headers: {
-              "Authorization": req.headers.get("Authorization") || "",
-            }
-          }).then(({ error }) => {
-            if (error) console.error("Chaining call failed:", error);
-          }).catch(e => console.error("Chaining call error:", e));
+          });
+
+          if (chainError) {
+            console.error("Chaining call failed:", chainError);
+            await supabase.from("sync_logs").update({
+              status: "failed",
+              error_message: `Chaining failed at offset ${progress.current}: ${chainError}`,
+              completed_at: new Date().toISOString(),
+            }).eq("id", logId);
+          }
         } else {
           await supabase.from("sync_logs").update({
             status: "completed",
