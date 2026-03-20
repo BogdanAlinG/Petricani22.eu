@@ -4,6 +4,7 @@ import { ChevronDown } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useLocalizedPath } from '../hooks/useLocalizedPath';
 import PreferencesDropdown from './PreferencesDropdown';
+import { throttle } from '../lib/utils';
 
 const Header: React.FC = () => {
   const { t } = useLanguage();
@@ -14,10 +15,11 @@ const Header: React.FC = () => {
   const [isMobileRentalsOpen, setIsMobileRentalsOpen] = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => {
+    // Throttle scroll handler to improve performance
+    const handleScroll = throttle(() => {
       setIsScrolled(window.scrollY > 20);
-    };
-    window.addEventListener('scroll', handleScroll);
+    }, 100);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
