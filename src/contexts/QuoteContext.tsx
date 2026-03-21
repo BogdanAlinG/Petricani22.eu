@@ -13,7 +13,26 @@ interface QuoteContextType {
 const QuoteContext = createContext<QuoteContextType | undefined>(undefined);
 
 export const QuoteProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [quoteRequest, setQuoteRequest] = useState<QuoteRequest | null>(null);
+  const [quoteRequest, setQuoteRequest] = useState<QuoteRequest | null>(() => {
+    try {
+      const saved = localStorage.getItem('quoteRequest');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  React.useEffect(() => {
+    try {
+      if (quoteRequest) {
+        localStorage.setItem('quoteRequest', JSON.stringify(quoteRequest));
+      } else {
+        localStorage.removeItem('quoteRequest');
+      }
+    } catch {
+      // Ignore
+    }
+  }, [quoteRequest]);
 
   return (
     <QuoteContext.Provider value={{ quoteRequest, setQuoteRequest }}>

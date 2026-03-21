@@ -28,23 +28,39 @@ function detectBrowserLanguage(): Language {
 }
 
 function getStoredLanguage(): Language | null {
-  const stored = localStorage.getItem(LANGUAGE_STORAGE_KEY);
-  if (stored === 'RO' || stored === 'EN') {
-    return stored;
+  try {
+    const stored = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+    if (stored === 'RO' || stored === 'EN') {
+      return stored;
+    }
+    return null;
+  } catch {
+    return null;
   }
-  return null;
 }
 
 function setStoredLanguage(lang: Language): void {
-  localStorage.setItem(LANGUAGE_STORAGE_KEY, lang);
+  try {
+    localStorage.setItem(LANGUAGE_STORAGE_KEY, lang);
+  } catch {
+    // Ignore error in private mode
+  }
 }
 
 function isFirstVisit(): boolean {
-  return !localStorage.getItem(FIRST_VISIT_KEY);
+  try {
+    return !localStorage.getItem(FIRST_VISIT_KEY);
+  } catch {
+    return false;
+  }
 }
 
 function markVisited(): void {
-  localStorage.setItem(FIRST_VISIT_KEY, 'true');
+  try {
+    localStorage.setItem(FIRST_VISIT_KEY, 'true');
+  } catch {
+    // Ignore error
+  }
 }
 
 function getLanguageFromPath(pathname: string): Language {
