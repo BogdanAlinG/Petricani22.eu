@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Calendar, Eye } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { supabase } from '../lib/supabase';
+import { throttle } from '../lib/utils';
 
 interface HeroImage {
   id: string;
@@ -74,7 +75,7 @@ const Hero: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const handleScroll = () => setScrollY(window.scrollY);
+    const handleScroll = throttle(() => setScrollY(window.scrollY), 16);
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);

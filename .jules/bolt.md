@@ -1,0 +1,3 @@
+## 2025-05-15 - [Throttling Scroll Events]
+**Learning:** High-frequency events like 'scroll' can cause excessive re-renders and layout thrashing, especially when updating state or performing DOM measurements (e.g., parallax, sticky navigation). Throttling these listeners significantly reduces main-thread work without noticeably affecting user experience.
+**Action:** Always use a `throttle` or `debounce` utility for scroll, resize, and mousemove event listeners. Use ~16ms for smooth animations (parallax) and ~100-200ms for less time-critical state updates (header background, visibility toggles).

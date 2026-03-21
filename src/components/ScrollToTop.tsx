@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowUp } from 'lucide-react';
+import { throttle } from '../lib/utils';
 
 const ScrollToTop: React.FC = () => {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setVisible(window.scrollY > 400);
+    const onScroll = throttle(() => setVisible(window.scrollY > 400), 200);
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
