@@ -29,8 +29,12 @@ const RATE_CACHE_EXPIRY = 60 * 60 * 1000; // 1 hour
 
 export const CurrencyProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [currency, setCurrencyState] = useState<Currency>(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    return (stored === 'EUR' || stored === 'RON') ? stored : 'EUR';
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      return (stored === 'EUR' || stored === 'RON') ? stored : 'EUR';
+    } catch {
+      return 'EUR';
+    }
   });
 
   const [exchangeRate, setExchangeRate] = useState<number | null>(null);
@@ -69,18 +73,28 @@ export const CurrencyProvider: React.FC<{ children: ReactNode }> = ({ children }
         setLastUpdated(data.fetched_at);
         setWarning(data.warning || null);
 
-        localStorage.setItem(RATE_CACHE_KEY, JSON.stringify({
-          rate: data.rate,
-          timestamp: Date.now(),
-          source: data.source,
-        }));
+        try {
+          localStorage.setItem(RATE_CACHE_KEY, JSON.stringify({
+            rate: data.rate,
+            timestamp: Date.now(),
+            source: data.source,
+          }));
+        } catch {
+          // Ignore
+        }
       } else {
         throw new Error('Failed to fetch exchange rate');
       }
     } catch (error) {
       console.error('Error fetching exchange rate:', error);
 
-      const cachedData = localStorage.getItem(RATE_CACHE_KEY);
+      let cachedData = null;
+      try {
+        cachedData = localStorage.getItem(RATE_CACHE_KEY);
+      } catch {
+        // Ignore
+      }
+
       if (cachedData) {
         try {
           const parsed = JSON.parse(cachedData);
@@ -106,7 +120,12 @@ export const CurrencyProvider: React.FC<{ children: ReactNode }> = ({ children }
   };
 
   useEffect(() => {
-    const cachedData = localStorage.getItem(RATE_CACHE_KEY);
+    let cachedData = null;
+    try {
+      cachedData = localStorage.getItem(RATE_CACHE_KEY);
+    } catch {
+      // Ignore
+    }
 
     if (cachedData) {
       try {
@@ -142,7 +161,11 @@ export const CurrencyProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   const setCurrency = (newCurrency: Currency) => {
     setCurrencyState(newCurrency);
-    localStorage.setItem(STORAGE_KEY, newCurrency);
+    try {
+      localStorage.setItem(STORAGE_KEY, newCurrency);
+    } catch {
+      // Ignore
+    }
   };
 
   return (

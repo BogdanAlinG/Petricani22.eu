@@ -41,6 +41,14 @@ export default class ErrorBoundary extends Component<Props, State> {
             <p className="text-gray-600 mb-6">
               An unexpected error occurred. Please try refreshing the page.
             </p>
+            {this.state.error && (
+              <div className="text-left bg-red-50 p-4 rounded-lg mb-6 overflow-auto max-h-48 text-sm w-full">
+                <p className="font-semibold text-red-800 mb-2">{this.state.error.message}</p>
+                <p className="text-red-600 whitespace-pre-wrap text-xs font-mono break-all w-full select-all">
+                  {this.state.error.stack}
+                </p>
+              </div>
+            )}
             <button
               onClick={this.handleReset}
               className="inline-flex items-center gap-2 btn btn-primary btn-md"
