@@ -12,27 +12,38 @@ import type {
   ICalEvent,
   PriceCalculation,
   PricingRule,
+  UnitType,
 } from '../types/accommodation';
 
 export function useAccommodations() {
   const [accommodations, setAccommodations] = useState<Accommodation[]>([]);
+  const [unitTypes, setUnitTypes] = useState<UnitType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchAccommodations = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const { data, error: fetchError } = await supabase
-        .from('accommodations')
-        .select('*')
-        .eq('is_visible', true)
-        .order('display_order');
+      const [accRes, typeRes] = await Promise.all([
+        supabase
+          .from('accommodations')
+          .select('*')
+          .eq('is_visible', true)
+          .order('display_order'),
+        supabase
+          .from('unit_types')
+          .select('*')
+          .order('display_order')
+      ]);
 
-      if (fetchError) throw fetchError;
-      setAccommodations(data || []);
+      if (accRes.error) throw accRes.error;
+      if (typeRes.error) throw typeRes.error;
+
+      setAccommodations(accRes.data || []);
+      setUnitTypes(typeRes.data || []);
       setError(null);
     } catch (err) {
-      console.error('Error fetching accommodations:', err);
+      console.error('Error fetching data:', err);
       setError('Failed to load rentals');
     } finally {
       setLoading(false);
@@ -40,10 +51,10 @@ export function useAccommodations() {
   }, []);
 
   useEffect(() => {
-    fetchAccommodations();
-  }, [fetchAccommodations]);
+    fetchData();
+  }, [fetchData]);
 
-  return { accommodations, loading, error, refetch: fetchAccommodations };
+  return { accommodations, unitTypes, loading, error, refetch: fetchData };
 }
 
 export function useAccommodation(slug: string) {

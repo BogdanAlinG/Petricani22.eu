@@ -57,6 +57,7 @@ export default function AccommodationsManagement() {
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState<Accommodation | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [unitTypes, setUnitTypes] = useState<{ slug: string; name_en: string }[]>([]);
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState('basic');
   const [showImageSelector, setShowImageSelector] = useState(false);
@@ -69,14 +70,16 @@ export default function AccommodationsManagement() {
 
   const fetchData = async () => {
     try {
-      const [accRes, catRes, amenRes] = await Promise.all([
+      const [accRes, catRes, amenRes, typeRes] = await Promise.all([
         supabase.from('accommodations').select('*').order('display_order'),
         supabase.from('amenity_categories').select('*').order('display_order'),
         supabase.from('amenities').select('*').order('display_order'),
+        supabase.from('unit_types').select('slug, name_en').order('display_order'),
       ]);
       setAccommodations(accRes.data || []);
       setAmenityCategories(catRes.data || []);
       setAmenities(amenRes.data || []);
+      setUnitTypes(typeRes.data || []);
     } catch (err) {
       console.error('Error fetching data:', err);
     } finally {
@@ -276,6 +279,7 @@ export default function AccommodationsManagement() {
           isCreating={isCreating}
           saving={saving}
           activeTab={activeTab}
+          unitTypes={unitTypes}
           selectedAmenities={selectedAmenities}
           amenityCategories={amenityCategories}
           amenities={amenities}

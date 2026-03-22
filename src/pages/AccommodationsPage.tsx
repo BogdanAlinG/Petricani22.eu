@@ -22,12 +22,6 @@ const content = {
     sqm: 'm²',
     featured: 'Featured',
     noAccommodations: 'No rentals available at the moment.',
-    filters: {
-      all: 'All',
-      rooms: 'Rooms',
-      apartments: 'Apartments',
-      villas: 'Villas',
-    },
   },
   RO: {
     eyebrow: 'Spații și Închirieri',
@@ -42,12 +36,6 @@ const content = {
     sqm: 'm²',
     featured: 'Recomandat',
     noAccommodations: 'Nu există unități disponibile momentan.',
-    filters: {
-      all: 'Toate',
-      rooms: 'Camere',
-      apartments: 'Apartamente',
-      villas: 'Vile',
-    },
   },
 };
 
@@ -236,19 +224,24 @@ function AccommodationCard({ accommodation, index }: { accommodation: Accommodat
 
 export default function AccommodationsPage() {
   const { language } = useLanguage();
-  const { accommodations, loading, error } = useAccommodations();
+  const { accommodations, unitTypes, loading, error } = useAccommodations();
   const [filter, setFilter] = useState('all');
   const t = content[language];
 
+  const dynamicFilters = [
+    { key: 'all', label: language === 'EN' ? 'All' : 'Toate' },
+    ...unitTypes.map(type => ({
+      key: type.slug,
+      label: language === 'EN' ? type.name_en : type.name_ro
+    }))
+  ];
+
   const filteredAccommodations = accommodations.filter((acc) => {
     if (filter === 'all') return true;
-    if (filter === 'rooms') return acc.unit_type === 'room';
-    if (filter === 'apartments') return acc.unit_type === 'apartment';
-    if (filter === 'villas') return acc.unit_type === 'villa';
-    return true;
+    return acc.unit_type === filter;
   });
 
-  const hasMultipleTypes = new Set(accommodations.map((a) => a.unit_type)).size > 1;
+  const hasMultipleTypes = unitTypes.length > 1;
 
   return (
     <div className="min-h-screen bg-[#faf9f7]">
@@ -283,17 +276,17 @@ export default function AccommodationsPage() {
         <div className="container mx-auto px-4">
           {hasMultipleTypes && (
             <div className="flex flex-wrap gap-2 mb-10">
-              {Object.entries(t.filters).map(([key, label]) => (
+              {dynamicFilters.map((f) => (
                 <button
-                  key={key}
-                  onClick={() => setFilter(key)}
+                  key={f.key}
+                  onClick={() => setFilter(f.key)}
                   className={`px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 ${
-                    filter === key
+                    filter === f.key
                       ? 'bg-primary text-white shadow-lg shadow-primary/20'
                       : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200 hover:border-gray-300'
                   }`}
                 >
-                  {label}
+                  {f.label}
                 </button>
               ))}
             </div>

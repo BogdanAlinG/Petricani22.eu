@@ -213,3 +213,12 @@ export interface PriceCalculation {
   currency: string;
   pricePerNight: number;
 }
+
+export interface UnitType {
+  id: string;
+  slug: string;
+  name_en: string;
+  name_ro: string;
+  icon: string;
+  display_order: number;
+}

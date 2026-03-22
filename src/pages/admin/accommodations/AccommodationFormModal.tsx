@@ -4,14 +4,7 @@ import type { Accommodation, Amenity, AmenityCategory } from '../../../types/acc
 import GalleryTab from './GalleryTab';
 import AmenitiesTab from './AmenitiesTab';
 
-const UNIT_TYPES = [
-  { value: 'room', label: 'Room' },
-  { value: 'apartment', label: 'Apartment' },
-  { value: 'villa', label: 'Villa' },
-  { value: 'suite', label: 'Suite' },
-  { value: 'studio', label: 'Studio' },
-  { value: 'yard', label: 'Yard' },
-];
+// UNIT_TYPES removed in favor of dynamic props
 
 const TABS = ['basic', 'gallery', 'content', 'pricing', 'amenities'] as const;
 
@@ -32,6 +25,7 @@ interface AccommodationFormModalProps {
   amenityCategories: AmenityCategory[];
   amenities: Amenity[];
   galleryImages: GalleryImage[];
+  unitTypes: { slug: string; name_en: string }[];
   onTabChange: (tab: string) => void;
   onFieldChange: (updates: Partial<Accommodation>) => void;
   onToggleAmenity: (amenityId: string) => void;
@@ -52,6 +46,7 @@ export default function AccommodationFormModal({
   amenityCategories,
   amenities,
   galleryImages,
+  unitTypes,
   onTabChange,
   onFieldChange,
   onToggleAmenity,
@@ -92,7 +87,7 @@ export default function AccommodationFormModal({
 
         <div className="p-6 max-h-[60vh] overflow-y-auto">
           {activeTab === 'basic' && (
-            <BasicTab editing={editing} onFieldChange={onFieldChange} onSelectThumbnail={onSelectThumbnail} />
+            <BasicTab editing={editing} onFieldChange={onFieldChange} onSelectThumbnail={onSelectThumbnail} unitTypes={unitTypes} />
           )}
           {activeTab === 'gallery' && (
             <GalleryTab
@@ -139,10 +134,12 @@ function BasicTab({
   editing,
   onFieldChange,
   onSelectThumbnail,
+  unitTypes,
 }: {
   editing: Accommodation;
   onFieldChange: (updates: Partial<Accommodation>) => void;
   onSelectThumbnail: () => void;
+  unitTypes: { slug: string; name_en: string }[];
 }) {
   const [showPin, setShowPin] = useState(false);
 
@@ -179,8 +176,8 @@ function BasicTab({
             onChange={(e) => onFieldChange({ unit_type: e.target.value })}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
           >
-            {UNIT_TYPES.map((type) => (
-              <option key={type.value} value={type.value}>{type.label}</option>
+            {unitTypes.map((type) => (
+              <option key={type.slug} value={type.slug}>{type.name_en}</option>
             ))}
           </select>
         </div>

@@ -58,6 +58,7 @@ const navItems: NavItem[] = [
       { label: 'Bookings', path: '/admin/bookings' },
       { label: 'Availability', path: '/admin/availability' },
       { label: 'Amenities', path: '/admin/amenities' },
+      { label: 'Unit Types', path: '/admin/unit-types' },
       { label: 'Guidebook', path: '/admin/guidebook' },
     ],
   },
