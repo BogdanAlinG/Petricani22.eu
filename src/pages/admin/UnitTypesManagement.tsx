@@ -16,6 +16,7 @@ import {
   Coffee,
   Warehouse,
   Car,
+  Pizza,
 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useToast } from '../../components/ui/Toast';
@@ -41,6 +42,7 @@ const ICON_OPTIONS = [
   { value: 'Coffee', label: 'Coffee', icon: <Coffee className="w-4 h-4" /> },
   { value: 'Warehouse', label: 'Warehouse', icon: <Warehouse className="w-4 h-4" /> },
   { value: 'Car', label: 'Car', icon: <Car className="w-4 h-4" /> },
+  { value: 'Pizza', label: 'Pizza', icon: <Pizza className="w-4 h-4" /> },
 ];
 
 const emptyType: Omit<UnitType, 'id'> = {
