@@ -66,48 +66,59 @@ export default function ImageSelector({ value, onChange, onClose, suggestedFolde
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
 
     setUploading(true);
+    const newMediaItems: MediaItem[] = [];
+    const newSelectedItems: { id: string; url: string }[] = [];
+
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${fileExt}`;
-      const filePath = `uploads/${fileName}`;
+      for (const file of files) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${fileExt}`;
+        const filePath = `uploads/${fileName}`;
 
-      const { error: uploadError } = await supabase.storage
-        .from('media')
-        .upload(filePath, file);
+        const { error: uploadError } = await supabase.storage
+          .from('media')
+          .upload(filePath, file);
 
-      if (uploadError) throw uploadError;
+        if (uploadError) throw uploadError;
 
-      const { data: urlData } = supabase.storage.from('media').getPublicUrl(filePath);
+        const { data: urlData } = supabase.storage.from('media').getPublicUrl(filePath);
 
-      const { data: mediaData, error: insertError } = await supabase
-        .from('media_library')
-        .insert({
-          filename: file.name,
-          url: urlData.publicUrl,
-          type: 'image',
-          size_bytes: file.size,
-        })
-        .select()
-        .single();
+        const { data: mediaData, error: insertError } = await supabase
+          .from('media_library')
+          .insert({
+            filename: file.name,
+            url: urlData.publicUrl,
+            type: 'image',
+            size_bytes: file.size,
+          })
+          .select()
+          .single();
 
-      if (insertError) throw insertError;
-
-      setMedia([mediaData, ...media]);
-      const newItem = { id: mediaData.id, url: mediaData.url };
-      if (multiple) {
-        setSelectedItems([...selectedItems, newItem]);
-      } else {
-        setSelectedItems([newItem]);
+        if (insertError) throw insertError;
+        
+        newMediaItems.push(mediaData);
+        newSelectedItems.push({ id: mediaData.id, url: mediaData.url });
       }
+
+      setMedia([...newMediaItems, ...media]);
+      if (multiple) {
+        setSelectedItems([...selectedItems, ...newSelectedItems]);
+      } else {
+        setSelectedItems([newSelectedItems[newSelectedItems.length - 1]]);
+      }
+      
+      toast.success(`Successfully uploaded ${files.length} ${files.length === 1 ? 'image' : 'images'}`);
     } catch (error) {
-      console.error('Error uploading file:', error);
-      toast.error('Failed to upload image. Please try again.');
+      console.error('Error uploading files:', error);
+      toast.error('Failed to upload some images. Please try again.');
     } finally {
       setUploading(false);
+      // Clear the input so the same files can be selected again if needed
+      e.target.value = '';
     }
   };
 
@@ -171,6 +182,7 @@ export default function ImageSelector({ value, onChange, onClose, suggestedFolde
               <input
                 type="file"
                 accept="image/*"
+                multiple={multiple}
                 onChange={handleFileUpload}
                 disabled={uploading}
                 className="hidden"
