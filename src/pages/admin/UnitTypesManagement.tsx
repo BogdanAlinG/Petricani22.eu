@@ -29,6 +29,9 @@ interface UnitType {
   name_ro: string;
   icon: string;
   display_order: number;
+  show_beds: boolean;
+  price_suffix_en: string;
+  price_suffix_ro: string;
 }
 
 const ICON_OPTIONS = [
@@ -51,6 +54,9 @@ const emptyType: Omit<UnitType, 'id'> = {
   name_ro: '',
   icon: 'Home',
   display_order: 0,
+  show_beds: true,
+  price_suffix_en: 'night',
+  price_suffix_ro: 'noapte',
 };
 
 export default function UnitTypesManagement() {
@@ -106,6 +112,9 @@ export default function UnitTypesManagement() {
       name_ro: editingType.name_ro,
       icon: editingType.icon,
       display_order: editingType.display_order,
+      show_beds: editingType.show_beds,
+      price_suffix_en: editingType.price_suffix_en,
+      price_suffix_ro: editingType.price_suffix_ro,
     };
 
     setSaving(true);
@@ -345,6 +354,58 @@ export default function UnitTypesManagement() {
                       <span className="text-[10px] font-medium">{icon.label}</span>
                     </button>
                   ))}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="show_beds"
+                  checked={editingType.show_beds}
+                  onChange={(e) =>
+                    setEditingType({ ...editingType, show_beds: e.target.checked })
+                  }
+                  className="w-4 h-4 text-primary focus:ring-primary border-gray-300 rounded"
+                />
+                <label htmlFor="show_beds" className="text-sm font-medium text-gray-700">
+                  Show beds count for this type
+                </label>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Price Unit (EN)
+                  </label>
+                  <div className="flex items-center gap-2 text-gray-500 bg-gray-50 px-3 py-2 border border-gray-300 rounded-lg">
+                    <span>/</span>
+                    <input
+                      type="text"
+                      value={editingType.price_suffix_en}
+                      onChange={(e) =>
+                        setEditingType({ ...editingType, price_suffix_en: e.target.value })
+                      }
+                      placeholder="night"
+                      className="w-full bg-transparent border-none p-0 focus:ring-0 text-gray-900"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Price Unit (RO)
+                  </label>
+                  <div className="flex items-center gap-2 text-gray-500 bg-gray-50 px-3 py-2 border border-gray-300 rounded-lg">
+                    <span>/</span>
+                    <input
+                      type="text"
+                      value={editingType.price_suffix_ro}
+                      onChange={(e) =>
+                        setEditingType({ ...editingType, price_suffix_ro: e.target.value })
+                      }
+                      placeholder="noapte"
+                      className="w-full bg-transparent border-none p-0 focus:ring-0 text-gray-900"
+                    />
+                  </div>
                 </div>
               </div>
 

@@ -59,6 +59,18 @@ export default function BookingWidget({ accommodation }: BookingWidgetProps) {
   const navigate = useNavigate();
   const t = content[language];
 
+  const priceSuffix = accommodation.unit_type_info
+    ? ` / ${language === 'EN' ? accommodation.unit_type_info.price_suffix_en : accommodation.unit_type_info.price_suffix_ro}`
+    : t.perNight;
+
+  const unitLabel = accommodation.unit_type_info 
+    ? (language === 'EN' ? accommodation.unit_type_info.price_suffix_en : accommodation.unit_type_info.price_suffix_ro)
+    : t.night;
+
+  const unitLabelPlural = accommodation.unit_type_info
+    ? (language === 'EN' ? `${accommodation.unit_type_info.price_suffix_en}s` : `${accommodation.unit_type_info.price_suffix_ro}i`)
+    : t.nights;
+
   const [checkIn, setCheckIn] = useState<Date | null>(null);
   const [checkOut, setCheckOut] = useState<Date | null>(null);
   const [guests, setGuests] = useState(1);
@@ -105,13 +117,13 @@ export default function BookingWidget({ accommodation }: BookingWidgetProps) {
           <span className="text-3xl font-bold text-gray-900">
             {formatPrice(calculateMinPricePerNight(accommodation))}
           </span>
-          <span className="text-gray-500">{t.perNight}</span>
+          <span className="text-gray-500">{priceSuffix}</span>
         </div>
         {accommodation.minimum_nights > 1 && (
           <div className="flex items-center gap-1 mt-2 text-sm text-gray-500">
             <Star className="w-4 h-4" />
             {t.minimumStay}: {accommodation.minimum_nights}{' '}
-            {accommodation.minimum_nights === 1 ? t.night : t.nights}
+            {accommodation.minimum_nights === 1 ? unitLabel : unitLabelPlural}
           </div>
         )}
       </div>
@@ -187,7 +199,7 @@ export default function BookingWidget({ accommodation }: BookingWidgetProps) {
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">
                 {formatPrice(priceCalculation.pricePerNight)} x {priceCalculation.nights}{' '}
-                {t.nights}
+                {priceCalculation.nights === 1 ? unitLabel : unitLabelPlural}
               </span>
               <span className="text-gray-900">{formatPrice(priceCalculation.subtotal)}</span>
             </div>

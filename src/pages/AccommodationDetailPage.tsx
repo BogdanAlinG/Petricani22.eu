@@ -489,12 +489,14 @@ export default function AccommodationDetailPage() {
               <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">{title}</h1>
 
               <div className="flex flex-wrap gap-6 text-gray-600">
-                <div className="flex items-center gap-2">
-                  <Bed className="w-5 h-5" />
-                  <span>
-                    {accommodation.beds} {t.beds}
-                  </span>
-                </div>
+                {accommodation.unit_type_info?.show_beds !== false && (
+                  <div className="flex items-center gap-2">
+                    <Bed className="w-5 h-5" />
+                    <span>
+                      {accommodation.beds} {t.beds}
+                    </span>
+                  </div>
+                )}
                 <div className="flex items-center gap-2">
                   <Bath className="w-5 h-5" />
                   <span>

@@ -57,7 +57,13 @@ export default function AccommodationsManagement() {
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState<Accommodation | null>(null);
   const [isCreating, setIsCreating] = useState(false);
-  const [unitTypes, setUnitTypes] = useState<{ slug: string; name_en: string }[]>([]);
+  const [unitTypes, setUnitTypes] = useState<{ 
+    slug: string; 
+    name_en: string; 
+    show_beds: boolean;
+    price_suffix_en: string;
+    price_suffix_ro: string;
+  }[]>([]);
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState('basic');
   const [showImageSelector, setShowImageSelector] = useState(false);
@@ -74,7 +80,7 @@ export default function AccommodationsManagement() {
         supabase.from('accommodations').select('*').order('display_order'),
         supabase.from('amenity_categories').select('*').order('display_order'),
         supabase.from('amenities').select('*').order('display_order'),
-        supabase.from('unit_types').select('slug, name_en').order('display_order'),
+        supabase.from('unit_types').select('slug, name_en, show_beds, price_suffix_en, price_suffix_ro').order('display_order'),
       ]);
       setAccommodations(accRes.data || []);
       setAmenityCategories(catRes.data || []);

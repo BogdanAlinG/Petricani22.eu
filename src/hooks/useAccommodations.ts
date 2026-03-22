@@ -27,12 +27,19 @@ export function useAccommodations() {
       const [accRes, typeRes] = await Promise.all([
         supabase
           .from('accommodations')
-          .select('*')
+          .select(`
+            *,
+            unit_type_info:unit_types!unit_type(
+              show_beds,
+              price_suffix_en,
+              price_suffix_ro
+            )
+          `)
           .eq('is_visible', true)
           .order('display_order'),
         supabase
           .from('unit_types')
-          .select('*')
+          .select('slug, name_en, name_ro, icon, display_order, show_beds, price_suffix_en, price_suffix_ro')
           .order('display_order')
       ]);
 
@@ -72,7 +79,14 @@ export function useAccommodation(slug: string) {
 
         const { data: accData, error: accError } = await supabase
           .from('accommodations')
-          .select('*')
+          .select(`
+            *,
+            unit_type_info:unit_types!unit_type(
+              show_beds,
+              price_suffix_en,
+              price_suffix_ro
+            )
+          `)
           .or(`slug.eq.${slug},slug_ro.eq.${slug}`)
           .eq('is_visible', true)
           .maybeSingle();

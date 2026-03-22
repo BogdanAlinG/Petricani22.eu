@@ -61,6 +61,12 @@ function AccommodationCard({ accommodation, index }: { accommodation: Accommodat
   const currencySymbol = currency === 'EUR' ? '€' : 'RON';
   const detailPath = getAccommodationPath({ slug: accommodation.slug, slug_ro: accommodation.slug_ro });
 
+  const priceSuffix = accommodation.unit_type_info
+    ? ` / ${language === 'EN' ? accommodation.unit_type_info.price_suffix_en : accommodation.unit_type_info.price_suffix_ro}`
+    : t.perNight;
+
+  const showBeds = accommodation.unit_type_info?.show_beds !== false;
+
   const isFeaturedLarge = index === 0 && accommodation.is_featured;
 
   if (isFeaturedLarge) {
@@ -102,10 +108,12 @@ function AccommodationCard({ accommodation, index }: { accommodation: Accommodat
               <p className="text-white/70 text-base max-w-lg line-clamp-2">{description}</p>
             )}
             <div className="flex flex-wrap items-center gap-4 mt-4 text-white/60 text-sm">
-              <span className="flex items-center gap-1.5">
-                <Bed className="w-4 h-4" />
-                {accommodation.beds} {t.beds}
-              </span>
+              {showBeds && (
+                <span className="flex items-center gap-1.5">
+                  <Bed className="w-4 h-4" />
+                  {accommodation.beds} {t.beds}
+                </span>
+              )}
               <span className="flex items-center gap-1.5">
                 <Bath className="w-4 h-4" />
                 {accommodation.bathrooms} {t.baths}
@@ -128,7 +136,7 @@ function AccommodationCard({ accommodation, index }: { accommodation: Accommodat
               <p className="text-white/50 text-xs font-medium mb-0.5">{t.from}</p>
               <p className="text-white text-2xl font-bold leading-none">
                 {currencySymbol} {price}
-                <span className="text-white/60 text-sm font-normal ml-1">{t.perNight}</span>
+                <span className="text-white/60 text-sm font-normal ml-1">{priceSuffix}</span>
               </p>
             </div>
             <div className="flex items-center gap-2 bg-white text-gray-900 px-5 py-3 rounded-xl font-semibold text-sm group-hover:bg-primary group-hover:text-white transition-colors duration-300">
@@ -182,7 +190,7 @@ function AccommodationCard({ accommodation, index }: { accommodation: Accommodat
             <p className="text-[11px] text-gray-400 font-medium">{t.from}</p>
             <p className="font-bold text-gray-900 text-base leading-tight">
               {currencySymbol} {price}
-              <span className="text-gray-400 text-xs font-normal ml-0.5">{t.perNight}</span>
+              <span className="text-gray-400 text-xs font-normal ml-0.5">{priceSuffix}</span>
             </p>
           </div>
         </div>
@@ -192,10 +200,12 @@ function AccommodationCard({ accommodation, index }: { accommodation: Accommodat
         )}
 
         <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-sm text-gray-400 mt-auto mb-4">
-          <span className="flex items-center gap-1.5">
-            <Bed className="w-3.5 h-3.5" />
-            {accommodation.beds} {t.beds}
-          </span>
+          {showBeds && (
+            <span className="flex items-center gap-1.5">
+              <Bed className="w-3.5 h-3.5" />
+              {accommodation.beds} {t.beds}
+            </span>
+          )}
           <span className="flex items-center gap-1.5">
             <Bath className="w-3.5 h-3.5" />
             {accommodation.bathrooms} {t.baths}
