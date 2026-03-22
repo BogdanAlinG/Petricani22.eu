@@ -1,0 +1,3 @@
+## 2025-05-15 - [Throttling Scroll Listeners]
+**Learning:** High-frequency scroll events can cause excessive re-renders and expensive DOM measurements (like `getBoundingClientRect`) if not throttled. For simple UI toggles (e.g., showing a "Scroll to Top" button), a throttle of 100ms is sufficient and saves significant CPU cycles. For smooth animations like parallax, a smaller throttle (~16ms for 60fps) is preferred. Always use the `{ passive: true }` option for scroll listeners to improve scroll performance by telling the browser the listener won't call `preventDefault()`.
+**Action:** Always check for unthrottled scroll, resize, or mousemove listeners. Use a `throttle` utility with appropriate timings: ~16ms for smooth animations, ~100-200ms for UI state updates.

@@ -7,6 +7,7 @@ import { useLocalizedPath } from '../hooks/useLocalizedPath';
 import { getArticleById, Article } from '../data/articles';
 import DOMPurify from 'dompurify';
 import UnitPriceCalculator from '../components/UnitPriceCalculator';
+import { throttle } from '../lib/utils';
 
 const ArticlePage: React.FC = () => {
   const { language, t } = useLanguage();
@@ -24,7 +25,7 @@ const ArticlePage: React.FC = () => {
   const [scrollProgress, setScrollProgress] = useState(0);
 
   useEffect(() => {
-    const handleScroll = () => {
+    const handleScroll = throttle(() => {
       const element = document.documentElement;
       const totalHeight = element.scrollHeight - element.clientHeight;
       const windowScrollTop = window.scrollY || element.scrollTop;
@@ -36,7 +37,7 @@ const ArticlePage: React.FC = () => {
       
       const progress = (windowScrollTop / totalHeight) * 100;
       setScrollProgress(progress);
-    };
+    }, 32);
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
