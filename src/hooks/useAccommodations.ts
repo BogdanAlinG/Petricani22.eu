@@ -31,6 +31,7 @@ export function useAccommodations() {
             *,
             unit_type_info:unit_types!unit_type(
               show_beds,
+              show_guests,
               price_suffix_en,
               price_suffix_ro
             )
@@ -39,7 +40,7 @@ export function useAccommodations() {
           .order('display_order'),
         supabase
           .from('unit_types')
-          .select('slug, name_en, name_ro, icon, display_order, show_beds, price_suffix_en, price_suffix_ro')
+          .select('slug, name_en, name_ro, icon, display_order, show_beds, show_guests, price_suffix_en, price_suffix_ro')
           .order('display_order')
       ]);
 
@@ -83,6 +84,7 @@ export function useAccommodation(slug: string) {
             *,
             unit_type_info:unit_types!unit_type(
               show_beds,
+              show_guests,
               price_suffix_en,
               price_suffix_ro
             )

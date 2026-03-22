@@ -30,6 +30,7 @@ interface UnitType {
   icon: string;
   display_order: number;
   show_beds: boolean;
+  show_guests: boolean;
   price_suffix_en: string;
   price_suffix_ro: string;
 }
@@ -55,6 +56,7 @@ const emptyType: Omit<UnitType, 'id'> = {
   icon: 'Home',
   display_order: 0,
   show_beds: true,
+  show_guests: true,
   price_suffix_en: 'night',
   price_suffix_ro: 'noapte',
 };
@@ -113,6 +115,7 @@ export default function UnitTypesManagement() {
       icon: editingType.icon,
       display_order: editingType.display_order,
       show_beds: editingType.show_beds,
+      show_guests: editingType.show_guests,
       price_suffix_en: editingType.price_suffix_en,
       price_suffix_ro: editingType.price_suffix_ro,
     };
@@ -369,6 +372,21 @@ export default function UnitTypesManagement() {
                 />
                 <label htmlFor="show_beds" className="text-sm font-medium text-gray-700">
                   Show beds count for this type
+                </label>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="show_guests"
+                  checked={editingType.show_guests}
+                  onChange={(e) =>
+                    setEditingType({ ...editingType, show_guests: e.target.checked })
+                  }
+                  className="w-4 h-4 text-primary focus:ring-primary border-gray-300 rounded"
+                />
+                <label htmlFor="show_guests" className="text-sm font-medium text-gray-700">
+                  Show guests count for this type
                 </label>
               </div>
 

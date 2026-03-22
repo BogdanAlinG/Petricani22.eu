@@ -25,7 +25,7 @@ interface AccommodationFormModalProps {
   amenityCategories: AmenityCategory[];
   amenities: Amenity[];
   galleryImages: GalleryImage[];
-  unitTypes: { slug: string; name_en: string; show_beds: boolean }[];
+  unitTypes: { slug: string; name_en: string; show_beds: boolean; show_guests: boolean }[];
   onTabChange: (tab: string) => void;
   onFieldChange: (updates: Partial<Accommodation>) => void;
   onToggleAmenity: (amenityId: string) => void;
@@ -139,7 +139,7 @@ function BasicTab({
   editing: Accommodation;
   onFieldChange: (updates: Partial<Accommodation>) => void;
   onSelectThumbnail: () => void;
-  unitTypes: { slug: string; name_en: string; show_beds: boolean }[];
+  unitTypes: { slug: string; name_en: string; show_beds: boolean; show_guests: boolean }[];
 }) {
   const [showPin, setShowPin] = useState(false);
 
@@ -240,16 +240,18 @@ function BasicTab({
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
           />
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Max Guests</label>
-          <input
-            type="number"
-            min="1"
-            value={editing.max_guests}
-            onChange={(e) => onFieldChange({ max_guests: parseInt(e.target.value) || 1 })}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
-          />
-        </div>
+        {unitTypes.find(t => t.slug === editing.unit_type)?.show_guests !== false && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Max Guests</label>
+            <input
+              type="number"
+              min="1"
+              value={editing.max_guests}
+              onChange={(e) => onFieldChange({ max_guests: parseInt(e.target.value) || 1 })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+            />
+          </div>
+        )}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Size (sqm)</label>
           <input

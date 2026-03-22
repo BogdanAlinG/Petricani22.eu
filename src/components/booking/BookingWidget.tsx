@@ -173,16 +173,18 @@ export default function BookingWidget({ accommodation }: BookingWidgetProps) {
           </div>
         )}
 
-        <div>
-          <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-            {t.guests}
+        {accommodation.unit_type_info?.show_guests !== false && (
+          <div>
+            <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+              {t.guests}
+            </div>
+            <GuestSelector
+              guests={guests}
+              onGuestsChange={setGuests}
+              maxGuests={accommodation.max_guests}
+            />
           </div>
-          <GuestSelector
-            guests={guests}
-            onGuestsChange={setGuests}
-            maxGuests={accommodation.max_guests}
-          />
-        </div>
+        )}
 
         <button
           onClick={handleReserve}

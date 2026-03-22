@@ -34,6 +34,7 @@ export interface Accommodation {
   amenities?: AccommodationAmenityWithDetails[];
   unit_type_info?: {
     show_beds: boolean;
+    show_guests: boolean;
     price_suffix_en: string;
     price_suffix_ro: string;
   };
@@ -227,6 +228,7 @@ export interface UnitType {
   icon: string;
   display_order: number;
   show_beds: boolean;
+  show_guests: boolean;
   price_suffix_en: string;
   price_suffix_ro: string;
 }

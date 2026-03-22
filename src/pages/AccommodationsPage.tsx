@@ -66,6 +66,7 @@ function AccommodationCard({ accommodation, index }: { accommodation: Accommodat
     : t.perNight;
 
   const showBeds = accommodation.unit_type_info?.show_beds !== false;
+  const showGuests = accommodation.unit_type_info?.show_guests !== false;
 
   const isFeaturedLarge = index === 0 && accommodation.is_featured;
 
@@ -118,10 +119,12 @@ function AccommodationCard({ accommodation, index }: { accommodation: Accommodat
                 <Bath className="w-4 h-4" />
                 {accommodation.bathrooms} {t.baths}
               </span>
-              <span className="flex items-center gap-1.5">
-                <Users className="w-4 h-4" />
-                {accommodation.max_guests} {t.guests}
-              </span>
+              {showGuests && (
+                <span className="flex items-center gap-1.5">
+                  <Users className="w-4 h-4" />
+                  {accommodation.max_guests} {t.guests}
+                </span>
+              )}
               {accommodation.sqm && (
                 <span className="flex items-center gap-1.5">
                   <Maximize2 className="w-3.5 h-3.5" />
@@ -210,10 +213,12 @@ function AccommodationCard({ accommodation, index }: { accommodation: Accommodat
             <Bath className="w-3.5 h-3.5" />
             {accommodation.bathrooms} {t.baths}
           </span>
-          <span className="flex items-center gap-1.5">
-            <Users className="w-3.5 h-3.5" />
-            {accommodation.max_guests} {t.guests}
-          </span>
+          {showGuests && (
+            <span className="flex items-center gap-1.5">
+              <Users className="w-3.5 h-3.5" />
+              {accommodation.max_guests} {t.guests}
+            </span>
+          )}
           {accommodation.sqm && (
             <span className="flex items-center gap-1.5">
               <Maximize2 className="w-3 h-3" />

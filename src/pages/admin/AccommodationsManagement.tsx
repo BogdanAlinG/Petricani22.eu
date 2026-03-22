@@ -61,6 +61,7 @@ export default function AccommodationsManagement() {
     slug: string; 
     name_en: string; 
     show_beds: boolean;
+    show_guests: boolean;
     price_suffix_en: string;
     price_suffix_ro: string;
   }[]>([]);
@@ -80,7 +81,7 @@ export default function AccommodationsManagement() {
         supabase.from('accommodations').select('*').order('display_order'),
         supabase.from('amenity_categories').select('*').order('display_order'),
         supabase.from('amenities').select('*').order('display_order'),
-        supabase.from('unit_types').select('slug, name_en, show_beds, price_suffix_en, price_suffix_ro').order('display_order'),
+        supabase.from('unit_types').select('slug, name_en, show_beds, show_guests, price_suffix_en, price_suffix_ro').order('display_order'),
       ]);
       setAccommodations(accRes.data || []);
       setAmenityCategories(catRes.data || []);
