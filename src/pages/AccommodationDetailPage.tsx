@@ -426,6 +426,8 @@ export default function AccommodationDetailPage() {
   const title = language === 'EN' ? accommodation.title_en : accommodation.title_ro;
   const description =
     language === 'EN' ? accommodation.description_en : accommodation.description_ro;
+  const shortDescription =
+    language === 'EN' ? accommodation.short_description_en : accommodation.short_description_ro;
 
   const amenitiesByCategory = (accommodation.amenities || []).reduce(
     (acc, link) => {
@@ -487,6 +489,12 @@ export default function AccommodationDetailPage() {
           <div className="lg:col-span-2 space-y-10">
             <div>
               <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">{title}</h1>
+              
+              {shortDescription && (
+                <p className="text-xl text-gray-600 font-medium mb-6 leading-relaxed">
+                  {shortDescription}
+                </p>
+              )}
 
               <div className="flex flex-wrap gap-6 text-gray-600">
                 {accommodation.unit_type_info?.show_beds !== false && (
