@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { throttle } from '../lib/utils';
 
 const SECTIONS = [
   { id: 'property', labelRo: 'Proprietatea', labelEn: 'Property' },
@@ -30,7 +31,7 @@ const PropertyStickyNav: React.FC = () => {
 
     let showThreshold = getThreshold();
 
-    const handleScroll = () => {
+    const handleScroll = throttle(() => {
       const scrollY = window.scrollY;
       setVisible(scrollY >= showThreshold);
 
@@ -44,7 +45,7 @@ const PropertyStickyNav: React.FC = () => {
         }
       }
       setActiveSection(current);
-    };
+    }, 100);
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll();
